@@ -1564,11 +1564,29 @@ function buildReusableNotes(d){
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
   return [`前3秒钩子：${first.copywriting||first.description||'待补充'}`,`产品首现：${m.firstAppear||'-'}秒；露出占比：${m.productRatio||'-'}%`,`主要结构：${top}`,`复用建议：保留原视频的${top||'核心'}节奏，替换为自身产品痛点、卖点证明和CTA。`].join('\n');
 }
+function buildVideoLibraryItem(overrides={}){
+  const cnt={};(appData?.shots||[]).forEach(s=>cnt[s.type]=(cnt[s.type]||0)+1);
+  const mainType=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'AI拆解';
+  return {
+    id:overrides.id||'video_'+Date.now(),
+    sourceName:appData?.sourceName||'已上传视频',
+    name:overrides.name||appData?.sourceName||'未命名爆款视频',
+    url:overrides.url||'',
+    category:overrides.category||'术后康复衣服参考视频',
+    framework:overrides.framework||mainType,
+    formula:overrides.formula||'由AI拆解生成',
+    frameworkLogic:overrides.frameworkLogic||'根据上传视频关键帧生成结构和分镜。',
+    reusable:overrides.reusable||buildReusableNotes(appData||{}),
+    metrics:appData?.metrics||{},
+    shots:appData?.shots||[],
+    savedAt:new Date().toISOString()
+  };
+}
 function saveCurrentVideoToLibrary(){
   if(!appData){alert('请先上传并完成一个爆款视频拆解');return;}
   const d=getAssignData(), fwName=document.getElementById('libFramework').value;
   const fw=(MATS['框架结构库']?.records||[]).find(r=>r['框架名称']===fwName)||{};
-  const item={id:'video_'+Date.now(),name:document.getElementById('libVideoName').value.trim()||'未命名爆款视频',url:document.getElementById('libVideoUrl').value.trim(),category:document.getElementById('libCategory').value.trim(),framework:fwName,formula:fw['短视频底层结构公式‼️']||'',frameworkLogic:fw['核心逻辑']||'',reusable:document.getElementById('libReusable').value.trim()||buildReusableNotes(appData),metrics:appData.metrics,shots:appData.shots,savedAt:new Date().toISOString()};
+  const item=buildVideoLibraryItem({name:document.getElementById('libVideoName').value.trim()||appData.sourceName||'未命名爆款视频',url:document.getElementById('libVideoUrl').value.trim(),category:document.getElementById('libCategory').value.trim(),framework:fwName,formula:fw['短视频底层结构公式‼️']||'',frameworkLogic:fw['核心逻辑']||'',reusable:document.getElementById('libReusable').value.trim()||buildReusableNotes(appData)});
   d.videos=[item,...(d.videos||[])].slice(0,50);setAssignData(d);alert('已保存到爆款视频库');
 }
 function buildShotLibraryItem(s,i){
@@ -1598,8 +1616,10 @@ function saveAllShotsToLibrary(){
   d.segments=d.segments||[];
   const items=appData.shots.map((s,i)=>buildShotLibraryItem(s,i));
   d.segments=[...items,...d.segments].slice(0,200);
+  const videoItem=buildVideoLibraryItem({name:appData.sourceName||'已上传视频'});
+  d.videos=[videoItem,...(d.videos||[]).filter(v=>v.sourceName!==videoItem.sourceName)].slice(0,50);
   setAssignData(d);
-  alert(`已保存 ${items.length} 个片段到爆款片段库，可在工作台「爆款视频库」查看`);
+  alert(`已保存 1 条视频拆解和 ${items.length} 个片段，可在工作台「爆款视频库」查看`);
 }
 function saveKOLProfile(){
   const d=getAssignData();
@@ -1682,6 +1702,7 @@ const LAB_SPEC_PRESETS=[
 ];
 const LAB_SPEC=LAB_SPEC_PRESETS[0];
 const LAB_SPEC_KEY='recovery_lab_publish_spec';
+const CLOUD_SYNC_KEY='recovery_lab_cloud_webhook';
 let labCurrent='frameworks';
 function labNavHtml(){return [['frameworks','01','十大框架库'],['videos','02','爆款视频库'],['kol','03','KOL 档案库'],['tool','04','视频拆解工具'],['brief','05','Brief 生成器'],['publish','06','发布规范']].map(n=>`<button class="${labCurrent===n[0]?'on':''}" onclick="${n[0]==='tool'?'openAnalyzer()':`renderLab('${n[0]}')`}"><small>${n[1]}</small>${n[2]}</button>`).join('');}
 function showLab(){document.getElementById('labPg').style.display='block';document.getElementById('uploadPg').style.display='none';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='none';document.getElementById('hdrSub').textContent='● 术后康复衣服素材工作台';renderLab(labCurrent||'frameworks');}
@@ -1689,13 +1710,38 @@ function openAnalyzer(){document.getElementById('labPg').style.display='none';do
 function labShell(inner){return `<div class="lab-shell"><aside class="lab-side"><div><div class="lab-brand">Recovery<span>AI</span><br>Viral Lab</div><div class="lab-kicker">Recovery Clothing · TikTok</div></div><nav class="lab-nav">${labNavHtml()}</nav><div class="lab-foot"><div>产品：<b>术后康复衣服</b></div><div>市场：US · 康复护理 / Adaptive Apparel</div><div>任务：框架库 → 拆解 → Brief → SEO发布规范</div></div></aside><main class="lab-main">${inner}</main></div>`;}
 function renderLab(section='frameworks'){labCurrent=section;const pg=document.getElementById('labPg');if(!pg)return;const views={frameworks:labFrameworks,videos:labVideos,kol:labKol,brief:labBrief,publish:labPublish};pg.innerHTML=labShell((views[section]||labFrameworks)());}
 function labFrameworks(){return `<div class="lab-eyebrow">Framework Library</div><h1 class="lab-title">十大爆款框架结构库</h1><p class="lab-desc">这里把课程的十大底层公式全部转成术后康复衣服可直接拍摄的内容框架。每个框架都能作为视频拆解、Brief生成和发布规范的知识库。</p><div class="lab-grid">${LAB_FRAMEWORKS.map(f=>`<article class="lab-card"><div class="lab-num">${f.no}</div><h3>${f.name}</h3><div class="lab-en">${f.en}</div><div><span class="lab-pill">${f.formula}</span><span class="lab-pill">${f.hook}</span></div><div class="lab-meta"><b>适用场景：</b>${f.scene}</div><div class="lab-meta"><b>结构步骤：</b>${f.steps}</div><div class="lab-meta"><b>适合达人：</b>${f.fit}</div><div class="lab-hook">Hook 示例：${f.hookEx}</div></article>`).join('')}</div>`;}
+function getCloudWebhook(){return localStorage.getItem(CLOUD_SYNC_KEY)||'';}
+function saveCloudWebhook(){
+  const url=document.getElementById('cloudWebhook')?.value.trim()||'';
+  if(!url){localStorage.removeItem(CLOUD_SYNC_KEY);alert('已清空云表Webhook');return;}
+  localStorage.setItem(CLOUD_SYNC_KEY,url);
+  alert('已保存云表Webhook');
+}
+async function syncLibraryToCloud(mode='all'){
+  const url=getCloudWebhook();
+  if(!url){alert('请先填写 n8n / Google Apps Script Webhook URL');return;}
+  const d=getAssignData();
+  const payload={source:'RecoveryAI Viral Lab',mode,ts:new Date().toISOString(),videos:d.videos||[],segments:d.segments||[],kol:d.kol||null,publishSpec:getPublishSpec()};
+  if(mode==='current'&&appData?.shots?.length){
+    payload.currentVideo=buildVideoLibraryItem({name:appData.sourceName||'当前视频'});
+    payload.currentSegments=appData.shots.map((s,i)=>buildShotLibraryItem(s,i));
+  }
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    alert('已同步到云表工作流');
+  }catch(e){
+    alert('同步失败：'+e.message+'。如果是CORS错误，请在n8n Webhook响应里允许跨域，或用Vercel API代理。');
+  }
+}
 function labVideos(){
   const d=getAssignData();
   const savedVideos=d.videos||[];
   const segments=d.segments||[];
+  const cloudHtml=`<section class="lab-card lab-spec"><h3>云表同步</h3><div class="lab-meta">填写 n8n Webhook URL 后，可以把第4步保存的视频拆解和片段同步到 Google Sheet 或飞书多维表。不要在前端填写 Google/飞书密钥，密钥放在 n8n 里。</div><div class="lab-form" style="margin-top:12px"><div class="lab-field"><label>Webhook URL</label><input class="lab-input" id="cloudWebhook" value="${getCloudWebhook()}" placeholder="https://你的n8n域名/webhook/..."></div><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><button class="lab-action" onclick="saveCloudWebhook()">保存Webhook</button><button class="lab-action alt" onclick="syncLibraryToCloud('all')">同步全部库</button><button class="lab-action alt" onclick="syncLibraryToCloud('current')">同步当前视频</button></div></div></section>`;
   const savedHtml=savedVideos.length?`<h2 class="lab-section-title">已保存视频拆解</h2><div class="lab-grid">${savedVideos.slice(0,6).map(v=>`<article class="lab-card"><h3>${v.name}</h3><div class="lab-en">${v.framework||'Saved Deconstruction'}</div><div class="lab-meta"><b>来源：</b>${v.url||v.category||'本地上传视频'}</div><div class="lab-meta"><b>可复用点：</b>${(v.reusable||'').replace(/\n/g,'<br>')}</div><div class="lab-meta"><b>片段数：</b>${v.shots?.length||0} · ${(v.savedAt||'').slice(0,10)}</div></article>`).join('')}</div>`:'';
   const segHtml=segments.length?`<h2 class="lab-section-title">爆款片段库</h2><div class="lab-grid">${segments.slice(0,12).map(s=>`<article class="lab-card"><div class="lab-num">#${s.shotId}</div><h3>${s.type}</h3><div class="lab-en">${s.videoName} · ${s.time}</div><div class="lab-meta"><b>画面：</b>${s.description}</div><div class="lab-hook">口播：${s.copywriting||'待补充'}</div><button class="lab-action alt" style="margin-top:12px;padding:9px 14px;font-size:12px" onclick="copySegmentText('${s.id}')">复制片段文字</button></article>`).join('')}</div>`:'';
-  return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">这里会沉淀两类资产：完整视频拆解，以及每个镜头片段的文字卡。你在第4步拆解后点击“保存全部片段到库”，后续就能直接回来复用。</p><div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>${savedHtml}${segHtml}`;
+  return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">这里会沉淀两类资产：完整视频拆解，以及每个镜头片段的文字卡。你在第4步拆解后点击“保存全部片段到库”，后续换新视频也不会覆盖旧记录。</p>${cloudHtml}<div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>${savedHtml}${segHtml}`;
 }
 function copySegmentText(id){
   const seg=(getAssignData().segments||[]).find(s=>s.id===id);
