@@ -571,7 +571,7 @@ function updateGStatus(){
 // ============================================================
 // API 代理
 // ============================================================
-async function fetchWithTimeout(url,options={},ms=25000){
+async function fetchWithTimeout(url,options={},ms=90000){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),ms);
   try{
@@ -584,7 +584,7 @@ async function fetchWithTimeout(url,options={},ms=25000){
   }
 }
 async function callProxy(body){
-  const r=await fetchWithTimeout('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},25000);
+  const r=await fetchWithTimeout('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},90000);
   const d=await r.json().catch(()=>({error:'Parse error '+r.status}));
   if(!r.ok||d.error){
     const errMsg=typeof d.error==='object'?(d.error.message||JSON.stringify(d.error)):String(d.error||'Proxy '+r.status);
@@ -627,7 +627,7 @@ async function callAI(claudeBody){
         const r=await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,
           {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(gemBody)},
-          25000
+          90000
         );
         const d=await r.json();
         if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
@@ -653,7 +653,7 @@ async function callAI(claudeBody){
         const key=getAKey();if(!key)throw new Error('NO_KEY');
         const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify(claudeBody)},25000);
+          body:JSON.stringify(claudeBody)},90000);
         const d=await r.json();
         if(!r.ok)throw new Error(d.error?.message||'Claude '+r.status);
         return d;
@@ -751,8 +751,8 @@ async function startAnalysis(file){
     const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frames.length,dur)}]:[{type:'text',text:buildPrompt(frames.length,dur)}];
     const data=await withTimeout(
       callAI({model:'claude-opus-4-5',max_tokens:1200,messages:[{role:'user',content}]}),
-      18000,
-      'AI分析超过18秒，已自动切换为本地兜底拆解'
+      90000,
+      'AI分析超过90秒，已自动切换为本地兜底拆解'
     );
     const txt=data.content?.[0]?.text||'';
     // 清理 thinking 标签和 markdown，精确提取 JSON
