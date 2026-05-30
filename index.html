@@ -619,11 +619,33 @@ async function callAI(claudeBody){
     ];
 
     const errors=[];
+    const responseSchema={
+      type:'OBJECT',
+      properties:{
+        metrics:{type:'OBJECT',properties:{
+          firstAppear:{type:'NUMBER'},
+          productDuration:{type:'NUMBER'},
+          productRatio:{type:'NUMBER'},
+          totalDuration:{type:'NUMBER'},
+          shotCount:{type:'INTEGER'}
+        },required:['firstAppear','productDuration','productRatio','totalDuration','shotCount']},
+        tip:{type:'STRING'},
+        shots:{type:'ARRAY',items:{type:'OBJECT',properties:{
+          id:{type:'INTEGER'},
+          startTime:{type:'NUMBER'},
+          endTime:{type:'NUMBER'},
+          type:{type:'STRING'},
+          description:{type:'STRING'},
+          copywriting:{type:'STRING'}
+        },required:['id','startTime','endTime','type','description','copywriting']}}
+      },
+      required:['metrics','tip','shots']
+    };
     for(const {model,thinking} of modelConfigs){
       try{
         const genCfg=thinking
-          ?{temperature:0.25,maxOutputTokens:4096,responseMimeType:'application/json'}
-          :{temperature:0.25,maxOutputTokens:4096,responseMimeType:'application/json',thinkingConfig:{thinkingBudget:0}};
+          ?{temperature:0.2,maxOutputTokens:8192,responseMimeType:'application/json',responseSchema}
+          :{temperature:0.2,maxOutputTokens:8192,responseMimeType:'application/json',responseSchema,thinkingConfig:{thinkingBudget:0}};
         const gemBody={contents:[{role:'user',parts}],generationConfig:genCfg};
         const r=await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,
@@ -769,7 +791,8 @@ async function startAnalysis(file){
     const imgs=frames.filter(f=>f.url).slice(0,12).map(f=>({
       type:'image',source:{type:'base64',media_type:'image/jpeg',data:f.url.split(',')[1]}
     }));
-    const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frames.length,dur)}]:[{type:'text',text:buildPrompt(frames.length,dur)}];
+    const frameCount=imgs.length||frames.length||5;
+    const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frameCount,dur)}]:[{type:'text',text:buildPrompt(frameCount,dur)}];
     const data=await withTimeout(
       callAI({model:'claude-opus-4-5',max_tokens:4096,messages:[{role:'user',content}]}),
       90000,
