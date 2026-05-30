@@ -122,6 +122,34 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 @media(max-width:800px){.mg{grid-template-columns:repeat(2,1fr)}.fgrid{grid-template-columns:1fr}.sdet{grid-template-columns:1fr 1fr}}
+.lab-shell{position:relative;z-index:1;display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 56px);background:#f5eee2;color:#241d18}
+.lab-side{background:#191410;color:#efe7d8;padding:28px 20px;display:flex;flex-direction:column;gap:22px;position:sticky;top:56px;height:calc(100vh - 56px)}
+.lab-brand{font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:.92;font-weight:900;letter-spacing:-.8px}.lab-brand span{color:#ff563f}
+.lab-kicker{font-size:11px;letter-spacing:3px;color:#9f927e;text-transform:uppercase;margin-top:10px}
+.lab-nav{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.lab-nav button{border:none;background:transparent;color:#bfb3a1;text-align:left;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;gap:12px;align-items:center;transition:all .2s}
+.lab-nav button:hover{background:rgba(255,255,255,.06);color:#fff}.lab-nav button.on{background:#ff563f;color:#fff;box-shadow:0 12px 28px rgba(255,86,63,.28)}
+.lab-nav small{font-family:ui-monospace,Menlo,monospace;color:inherit;opacity:.72}
+.lab-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.1);padding-top:18px;color:#9f927e;font-size:12px;line-height:1.7}.lab-foot b{color:#efe7d8}
+.lab-main{padding:42px 46px 70px;overflow:auto}
+.lab-eyebrow{font-size:12px;letter-spacing:5px;color:#ff563f;font-weight:800;text-transform:uppercase;margin-bottom:10px}
+.lab-title{font-family:Georgia,'Times New Roman',serif;font-size:42px;line-height:1.05;font-weight:900;letter-spacing:-1.2px;margin-bottom:12px;color:#231b16}
+.lab-desc{font-size:15px;line-height:1.8;color:#5d5449;max-width:980px;margin-bottom:28px}
+.lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.lab-grid.one{grid-template-columns:1fr}.lab-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lab-card{background:#fffdf9;border:1px solid #e3d6c6;border-radius:14px;padding:22px;box-shadow:0 18px 44px rgba(83,59,28,.08);position:relative;overflow:hidden}
+.lab-card.no-shadow{box-shadow:none}.lab-num{position:absolute;right:22px;top:12px;font-family:Georgia,'Times New Roman',serif;font-size:56px;color:#eee3d4;font-weight:900;line-height:1}
+.lab-card h3{font-family:Georgia,'Times New Roman',serif;font-size:23px;margin-bottom:3px;color:#231b16}.lab-en{font:12px ui-monospace,Menlo,monospace;color:#d68a2d;letter-spacing:1px;margin-bottom:14px}
+.lab-meta{font-size:14px;line-height:1.75;color:#51483f;margin-top:8px}.lab-meta b{color:#251e19}.lab-pill{display:inline-flex;align-items:center;border-radius:999px;background:#f0e6d7;color:#6d5a43;padding:4px 10px;font-size:12px;font-weight:700;margin:2px 4px 2px 0}
+.lab-hook{margin-top:16px;border-left:4px solid #ff563f;background:#f1e7d9;border-radius:10px;padding:12px 14px;font-size:13px;font-style:italic;color:#4b4037}
+.lab-list{display:flex;flex-direction:column;gap:14px}.lab-video{display:grid;grid-template-columns:54px 1fr auto;gap:16px;align-items:center;background:#f0e6d7;border:1px solid #e1d1bd;border-radius:14px;padding:14px 18px;color:#241d18}
+.lab-emoji{width:54px;height:54px;border-radius:12px;background:linear-gradient(135deg,#ff563f,#ff9d2e);display:flex;align-items:center;justify-content:center;font-size:24px}.lab-video h3{font-size:18px;margin:0 0 4px}.lab-views{color:#ff563f;font-weight:900;font-family:ui-monospace,Menlo,monospace}
+.lab-profile{display:grid;grid-template-columns:150px 1fr;gap:22px}.lab-avatar{height:150px;border-radius:16px;background:linear-gradient(135deg,#ffe2d5,#f3cf9e);display:flex;align-items:center;justify-content:center;font-size:54px}
+.lab-stats{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}.lab-stat{background:#f0e6d7;border:1px solid #deceb9;border-radius:12px;padding:12px 18px;min-width:110px}.lab-stat b{font-family:Georgia,'Times New Roman',serif;font-size:23px;display:block}
+.lab-form{display:grid;grid-template-columns:1fr 1fr;gap:18px}.lab-field label{display:block;font-size:13px;color:#766a5c;margin-bottom:8px;font-weight:700}.lab-input,.lab-select,.lab-textarea{width:100%;border:1px solid #dfcfba;background:#fffaf3;border-radius:10px;padding:12px 14px;color:#241d18;font-size:14px;font-family:inherit;outline:none}.lab-textarea{min-height:120px;resize:vertical}.lab-input:focus,.lab-select:focus,.lab-textarea:focus{border-color:#ff563f;box-shadow:0 0 0 3px rgba(255,86,63,.1)}
+.lab-action{border:none;border-radius:11px;background:#107d68;color:#fff;font-size:14px;font-weight:800;padding:13px 22px;cursor:pointer;box-shadow:0 12px 24px rgba(16,125,104,.18)}.lab-action.alt{background:#ff563f;box-shadow:0 12px 24px rgba(255,86,63,.18)}
+.lab-output{white-space:pre-wrap;background:#fffaf3;border:1px solid #e3d6c6;border-radius:13px;padding:18px;font-size:14px;line-height:1.8;color:#312821;min-height:160px}.lab-band{background:#211812;color:#f4eade;border-radius:18px;padding:22px 26px;margin-bottom:18px;display:flex;align-items:center;gap:20px}.lab-band b{font-size:34px;color:#ff563f;font-family:Georgia,'Times New Roman',serif}
+.lab-section-title{font-family:Georgia,'Times New Roman',serif;font-size:27px;margin:8px 0 14px}.lab-spec{margin-bottom:18px}.lab-spec h3{font-family:Georgia,'Times New Roman',serif;font-size:24px;margin-bottom:12px}.lab-spec .box{border:1px dashed #ffb3a6;background:#fff8f5;border-radius:12px;padding:14px;color:#ff563f;font-weight:800}
+@media(max-width:900px){.lab-shell{grid-template-columns:1fr}.lab-side{position:relative;top:0;height:auto}.lab-nav{display:grid;grid-template-columns:repeat(2,1fr)}.lab-main{padding:28px 18px}.lab-grid,.lab-grid.three,.lab-form{grid-template-columns:1fr}.lab-profile{grid-template-columns:1fr}.lab-title{font-size:34px}}
 </style>
 </head>
 <body>
@@ -134,6 +162,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <button class="mbtn" id="mb-gemini" onclick="setModel('gemini')">Gemini</button>
     </div>
     <button class="hbtn" id="keyBtn" style="display:flex" onclick="toggleKey()">🔑 API Key</button>
+    <button class="hbtn" id="labBtn" style="display:flex" onclick="showLab()">工作台</button>
     <button class="hbtn" id="backBtn" style="display:none" onclick="resetApp()">← 重新分析</button>
   </div>
 </div>
@@ -148,9 +177,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <input class="ki" type="password" id="kiGemini" placeholder="AIzaSy..." onfocus="clearMaskedKey(this)">
     <button class="ksave" style="background:linear-gradient(135deg,#4285f4,#0f9d58)" onclick="saveKey('gemini')">保存</button>
     <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:11px;color:#4285f4">获取（免费）</a>
-  </div>
 </div>
-<div id="uploadPg" style="display:block">
+</div>
+<div id="labPg" style="display:block"></div>
+<div id="uploadPg" style="display:none">
   <div class="upload-pg">
     <div class="pg-title">爆款短视频拆解工具</div>
     <div class="pg-sub">上传视频 · AI自动拆解结构 · 生成可复用的爆款脚本</div>
@@ -1537,6 +1567,41 @@ function exportAssignmentMD(){dl('爆款视频_KOL_Brief_SEO作业包.md',buildA
 function resetAssignmentData(){if(confirm('确定清空爆款视频库、KOL档案和Brief结果？')){localStorage.removeItem(ASSIGN_KEY);renderAssignmentSummary();}}
 
 // ============================================================
+// 术后康复衣服作业工作台
+// ============================================================
+const LAB_FRAMEWORKS=[
+  {no:'01',formula:'停 → 病 → 药 → 信 → 买',name:'经典痛点型',en:'Pain Amplification',hook:'痛点冲击',scene:'适合开局冷启动，用一个术后真实难题先让目标用户停下：抬不起手、伤口怕摩擦、换药尴尬、出院回家第一晚不知穿什么。',steps:'① 0-3秒展示痛苦穿衣画面 → ② 放大术后行动受限/护理麻烦 → ③ 术后康复衣服出场，展示侧开扣、前开襟、导管口袋、柔软面料 → ④ 用用户评价/护理人员推荐/真实试穿建信任 → ⑤ 引导查看尺码或下单。',fit:'术后恢复vlog、照护者账号、健康生活KOC',hookEx:'No one tells you getting dressed is this hard after surgery.'},
+  {no:'02',formula:'药 → 停 → 病 → 药 → 信 → 买',name:'效果前置型',en:'Payoff-First',hook:'效果冲击',scene:'适合产品效果可视化强的内容，先展示“穿脱很轻松”“不用抬手也能换衣”的结果，再解释痛点。',steps:'① 开头直接展示患者坐着完成穿衣/换药 → ② 字幕强调“no arm lifting needed” → ③ 回放普通T恤造成拉扯和疼痛 → ④ 展开康复衣服结构细节 → ⑤ 展示真实反馈与购买入口。',fit:'测评号、照护者教程号、康复日常账号',hookEx:'I changed clothes after shoulder surgery without lifting my arm.'},
+  {no:'03',formula:'停 → A vs B → 药 → 信 → 买',name:'对比碾压型',en:'Before / After',hook:'对比冲击',scene:'适合和普通睡衣、普通T恤、医院病号服做AB对比，视觉上说明为什么专门的康复服更适合术后。',steps:'① 分屏：普通T恤卡住/拉扯 vs 侧开扣康复衣顺利穿脱 → ② 计时或疼痛表情对比 → ③ 细节解释：开口位置、魔术贴/按扣、口袋 → ④ 真实评价/复购/家属反馈 → ⑤ CTA。',fit:'对比党、护理技巧号、家庭照护账号',hookEx:'Same surgery. Two outfits. Completely different recovery day.'},
+  {no:'04',formula:'停(好奇) → 病 → 药 → 信 → 买',name:'好奇悬念型',en:'Curiosity Gap',hook:'好奇悬念',scene:'适合教育市场认知，因为很多人不知道“术后出院穿什么”本身就是问题。',steps:'① 抛出反常识问题：“出院那天最容易被忽略的东西是什么？” → ② 揭示不是药也不是枕头，而是衣服 → ③ 展示普通衣服的麻烦 → ④ 产品解决 → ⑤ 可信证明与购买。',fit:'科普号、护理经验号、术后恢复故事号',hookEx:'The most overlooked thing after surgery is not your pillow.'},
+  {no:'05',formula:'停(他人反应) → 药 → 病 → 信 → 买',name:'社交证明型',en:'Social Proof',hook:'社交证明',scene:'适合已有UGC、评论或礼物场景时使用，用“收到的人真的会用上”而不是空泛送礼。',steps:'① 展示妈妈/伴侣/朋友收到康复衣后的反应 → ② 快速展示产品是什么 → ③ 解释术后穿衣、换药、引流管管理痛点 → ④ 多条评论/达人反馈叠加 → ⑤ 引导购买给术后家人。',fit:'礼物推荐号、女性生活号、家庭照护号',hookEx:'Flowers are sweet. This is what she actually used after surgery.'},
+  {no:'06',formula:'停(真实场景) → 病 → 药 → 信 → 买',name:'真实体验型(4.0)',en:'Recovery Vlog',hook:'真实场景',scene:'适合中高客单价转化，强调真实生活而不是硬广。可拍“术后第3天的一天”“妈妈回家第一晚”。',steps:'① vlog式真实开场：床边/浴室/换药桌 → ② 自然说出今天穿衣最怕拉扯 → ③ 产品融入换衣、吃饭、散步、复诊 → ④ 用7天体验结论建立信任 → ⑤ 软CTA。',fit:'恢复日记、护理师、真实生活vlog达人',hookEx:'Day 3 after surgery: this shirt made the small things easier.'},
+  {no:'07',formula:'停(知识钩子) → 病 → 药 → 信 → 买',name:'科普权威型(2.0)',en:'Education Authority',hook:'知识科普',scene:'适合讲清楚“术后衣服为什么要前开/侧开/避免抬臂”，需要避免医疗承诺，但可以讲护理便利和舒适性。',steps:'① 冷知识：“术后恢复期不要只准备宽松衣服” → ② 解释抬臂、摩擦、引流管、换药带来的问题 → ③ 产品结构逐项对应 → ④ 面料/设计/护理建议建信任 → ⑤ CTA。',fit:'护士/康复师科普号、健康科普号、照护者教育号',hookEx:'Loose clothes are not always enough after surgery.'},
+  {no:'08',formula:'停 → 药 → 场景1 → 场景2 → 场景3 → 买',name:'多场景轰炸型',en:'Multi-Use Scenes',hook:'效果冲击',scene:'适合展示产品在多个恢复环节的价值：穿衣、换药、睡觉、复诊、居家会客。',steps:'① 最强场景开头：不用抬手穿衣 → ② 快切换药/导管管理 → ③ 睡觉不勒伤口 → ④ 复诊外穿也不尴尬 → ⑤ 总结适合哪些手术后场景并CTA。',fit:'功能展示号、清单推荐号、居家照护号',hookEx:'One recovery shirt, five moments nobody prepares you for.'},
+  {no:'09',formula:'停(拆箱) → 药 → 药 → 信 → 买',name:'开箱种草型',en:'Unboxing',hook:'开箱惊喜',scene:'适合礼盒、套装、颜色/尺码丰富、包装体面的时候，用“送给术后恢复的人”来承接礼物需求。',steps:'① 拆箱ASMR/礼盒特写 → ② 展示面料柔软度和结构 → ③ 上身或假人演示穿脱 → ④ 尺码、护理卡、退换保障建立信任 → ⑤ 礼物/自用CTA。',fit:'开箱号、礼物推荐号、生活方式达人',hookEx:'What I packed for my sister before her surgery.'},
+  {no:'10',formula:'停(冲突) → 病 → 反转 → 药 → 买',name:'剧情反转型(3.0)',en:'Conflict Twist',hook:'冲突反转',scene:'适合做内容差异化，开头制造家人“买错恢复用品”的冲突，再反转到真正有用的康复衣服。',steps:'① 开头冲突：家人买了一堆没用的小东西 → ② 患者真正卡在穿衣/换药 → ③ 反转：一件康复衣解决多个尴尬 → ④ 快速展示设计 → ⑤ CTA。',fit:'剧情号、家庭关系号、照护者账号',hookEx:'He bought flowers. I needed something I could actually wear.'}
+];
+const LAB_VIDEOS=[
+  {emoji:'🩹',title:'Same patient, same hallway — one recovery shirt later',framework:'03 · 对比碾压型',views:'3.2M',note:'用同一场景做普通T恤 vs 康复衣对比，转化最高。'},
+  {emoji:'💪',title:'POV: you cannot lift your arm after surgery',framework:'06 · 真实体验型',views:'1.8M',note:'第一视角代入强，适合肩颈、胸部、手臂术后场景。'},
+  {emoji:'🎁',title:'What I packed before my mom came home from surgery',framework:'09 · 开箱种草型',views:'940K',note:'把产品放进“术后回家清单”，适合礼物和照护者人群。'}
+];
+const LAB_KOL={name:'@healingwithgrace',platform:'TikTok（主） + Instagram Reels',fans:'118K',avg:'76K',er:'6.9%',direction:'术后恢复vlog / caregiver tips / practical recovery essentials',audience:'78% 女性，28-55岁，美国为主；包含术后患者、照护者、妈妈与中高客单健康用品买家。',style:'真实温柔、实用清单型、第一视角POV，擅长把尴尬恢复细节讲得自然。',rate:'约 $350 / 条 organic video；Spark Ads 另议。',stage:'rate_acceptable（报价在预算内，可进入选品/地址/合同）',why:'她的内容天然覆盖“恢复期穿衣困难、家属照护、出院准备清单”等痛点，和术后康复衣服契合度高。'};
+const LAB_SPEC={primary:'post surgery recovery clothes',secondary:['post surgery shirt','surgery recovery outfit','adaptive clothing','mastectomy recovery shirt','c section recovery clothes'],reason:'该词同时覆盖产品品类、术后使用场景和购买意图，比泛词 clothing 更精准；用户通常在术前准备或出院后遇到穿衣困难时搜索，适合TikTok SEO长尾承接。',hook:'No one tells you getting dressed is this hard after surgery.',caption:'Recovery is already hard. Your clothes should not make it harder. This post surgery recovery shirt is designed for easier dressing, dressing changes, and everyday comfort at home. Save this for your recovery checklist.',hashtags:'#postsurgeryrecovery #recoverysurgery #adaptivestyle #adaptiveclothing #postsurgeryshirt #mastectomyrecovery #caregivertips #recoveryessentials #tiktokmademebuyit'};
+let labCurrent='frameworks';
+function labNavHtml(){return [['frameworks','01','十大框架库'],['videos','02','爆款视频库'],['kol','03','KOL 档案库'],['tool','04','视频拆解工具'],['brief','05','Brief 生成器'],['publish','06','发布规范']].map(n=>`<button class="${labCurrent===n[0]?'on':''}" onclick="${n[0]==='tool'?'openAnalyzer()':`renderLab('${n[0]}')`}"><small>${n[1]}</small>${n[2]}</button>`).join('');}
+function showLab(){document.getElementById('labPg').style.display='block';document.getElementById('uploadPg').style.display='none';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='none';document.getElementById('hdrSub').textContent='● 术后康复衣服素材工作台';renderLab(labCurrent||'frameworks');}
+function openAnalyzer(){document.getElementById('labPg').style.display='none';document.getElementById('uploadPg').style.display='block';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('hdrSub').textContent='● 第4步：上传爆款视频进行拆解';}
+function labShell(inner){return `<div class="lab-shell"><aside class="lab-side"><div><div class="lab-brand">Recover<span>Ease</span><br>Viral Lab</div><div class="lab-kicker">Recovery Clothing · TikTok</div></div><nav class="lab-nav">${labNavHtml()}</nav><div class="lab-foot"><div>产品：<b>术后康复衣服</b></div><div>市场：US · 康复护理 / Adaptive Apparel</div><div>任务：框架库 → 拆解 → Brief → SEO发布规范</div></div></aside><main class="lab-main">${inner}</main></div>`;}
+function renderLab(section='frameworks'){labCurrent=section;const pg=document.getElementById('labPg');if(!pg)return;const views={frameworks:labFrameworks,videos:labVideos,kol:labKol,brief:labBrief,publish:labPublish};pg.innerHTML=labShell((views[section]||labFrameworks)());}
+function labFrameworks(){return `<div class="lab-eyebrow">Framework Library</div><h1 class="lab-title">十大爆款框架结构库</h1><p class="lab-desc">这里把课程的十大底层公式全部转成术后康复衣服可直接拍摄的内容框架。每个框架都能作为视频拆解、Brief生成和发布规范的知识库。</p><div class="lab-grid">${LAB_FRAMEWORKS.map(f=>`<article class="lab-card"><div class="lab-num">${f.no}</div><h3>${f.name}</h3><div class="lab-en">${f.en}</div><div><span class="lab-pill">${f.formula}</span><span class="lab-pill">${f.hook}</span></div><div class="lab-meta"><b>适用场景：</b>${f.scene}</div><div class="lab-meta"><b>结构步骤：</b>${f.steps}</div><div class="lab-meta"><b>适合达人：</b>${f.fit}</div><div class="lab-hook">Hook 示例：${f.hookEx}</div></article>`).join('')}</div>`;}
+function labVideos(){return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">先放3条可作为作业样例的爆款方向。之后你用第4步上传真实视频拆解后，可以把结论补进这里，形成自己的可复用素材库。</p><div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>`;}
+function labKol(){return `<div class="lab-eyebrow">Creator Roster</div><h1 class="lab-title">KOL 档案库</h1><p class="lab-desc">这位虚拟达人用于完成作业第3步：在KOL库中录入一个适合品牌的达人，并用她来生成定制化Brief。</p><section class="lab-card lab-profile"><div class="lab-avatar">🩺</div><div><h3>${LAB_KOL.name} <span style="font-size:13px;color:#ff563f;font-family:ui-monospace,Menlo,monospace">${LAB_KOL.platform}</span></h3><div class="lab-stats"><div class="lab-stat"><b>${LAB_KOL.fans}</b>粉丝</div><div class="lab-stat"><b>${LAB_KOL.avg}</b>平均播放</div><div class="lab-stat"><b>${LAB_KOL.er}</b>互动率</div></div>${['direction','audience','style','rate','stage','why'].map(k=>`<div class="lab-meta"><b>${{direction:'内容方向',audience:'受众画像',style:'风格',rate:'报价',stage:'合作阶段',why:'为何契合'}[k]}：</b>${LAB_KOL[k]}</div>`).join('')}</div></section>`;}
+function labBrief(){const opts=LAB_FRAMEWORKS.map(f=>`<option value="${f.no}">${f.no} ${f.name}｜${f.formula}</option>`).join('');return `<div class="lab-eyebrow">Brief Generator</div><h1 class="lab-title">Brief 生成器</h1><p class="lab-desc">选择虚拟KOL和视频框架，一键生成术后康复衣服的达人拍摄Brief。这里先做稳定可交作业版本，后续可再接入AI模型自动扩写。</p><section class="lab-card"><div class="lab-form"><div><div class="lab-field"><label>选择网红</label><select class="lab-select" id="labKolSel"><option>${LAB_KOL.name}（术后恢复vlog / caregiver tips）</option></select></div><div class="lab-field"><label>选择框架</label><select class="lab-select" id="labFwSel">${opts}</select></div><div class="lab-field"><label>产品核心卖点</label><textarea class="lab-textarea" id="labPoints">前开襟/侧开扣，不需要大幅抬手；柔软亲肤面料，减少伤口附近摩擦；适合换药、复诊、居家恢复；可放置引流管或小物；比普通T恤更体面。</textarea></div><button class="lab-action" onclick="generateLabBrief()">生成定制 Brief</button></div><div><div class="lab-card no-shadow" style="background:#fff8f0"><h3>达人快照</h3><div class="lab-meta"><b>${LAB_KOL.name}</b> · ${LAB_KOL.fans}粉 · ${LAB_KOL.er}互动率</div><div class="lab-meta">${LAB_KOL.why}</div></div></div></div><hr style="border:none;border-top:1px solid #e3d6c6;margin:22px 0"><div class="lab-output" id="labBriefOut">Brief 将显示在这里。</div></section>`;}
+function generateLabBrief(){const no=document.getElementById('labFwSel').value;const f=LAB_FRAMEWORKS.find(x=>x.no===no)||LAB_FRAMEWORKS[0];const p=document.getElementById('labPoints').value.trim();document.getElementById('labBriefOut').textContent=`《${LAB_KOL.name} 术后康复衣服 TikTok Brief》\n\n1. 视频目标\n围绕“post surgery recovery clothes”拍摄一条30-45秒真实生活短视频，让观众理解：术后恢复期的穿衣、换药、复诊并不是普通宽松衣服能解决的事。\n\n2. 命中框架\n${f.no} ${f.name}｜${f.formula}\n开头钩子类型：${f.hook}\n核心逻辑：${f.steps}\n\n3. 达人设定\n达人以术后恢复vlog/照护者tips口吻拍摄，语气真实、温柔、实用，不做夸张医疗承诺。受众是美国28-55岁女性、术后患者、家属照护者和正在准备手术的人。\n\n4. 必拍镜头\n- 0-3秒：${f.hookEx}\n- 痛点：普通T恤/睡衣在抬手、拉扯、换药时造成不便。\n- 产品：展示前开襟/侧开扣/口袋/面料细节。\n- 使用：床边穿衣、换药前后、复诊出门、居家活动。\n- 信任：真实体验一句话 + 评论/尺码卡/护理建议画面。\n- CTA：Save this for your recovery checklist / Check the size guide.\n\n5. 产品卖点\n${p}\n\n6. 禁止项\n不得承诺治愈、止痛、加速伤口愈合；不得冒充医生背书；不得展示过度敏感伤口画面；不要把产品说成医疗器械。`; }
+function labPublish(){return `<div class="lab-eyebrow">Publishing Spec · TikTok SEO</div><h1 class="lab-title">视频发布规范（达人交付要求）</h1><p class="lab-desc">针对虚拟达人 ${LAB_KOL.name} 的Brief，下面是可直接发给达人的发布要求：关键词、开头3秒字幕、Caption、Hashtag都必须按这个逻辑执行。</p><div class="lab-band"><b>3"</b><div>达人 <strong>${LAB_KOL.name}</strong> · 框架：<strong>03 对比碾压型 / 06 真实体验型</strong> · 所有项目均为强制交付项，满足后再发布。</div></div><section class="lab-card lab-spec"><h3>A 核心关键词 & 选词理由</h3><div class="lab-meta"><b>主关键词：</b><span class="lab-pill">${LAB_SPEC.primary}</span></div><div class="lab-meta"><b>辅助长尾：</b>${LAB_SPEC.secondary.map(x=>`<span class="lab-pill">${x}</span>`).join('')}</div><div class="lab-meta">${LAB_SPEC.reason}</div></section><section class="lab-card lab-spec"><h3>B 开头3秒吸睛字幕（Hook Subtitle）</h3><div class="box">"${LAB_SPEC.hook}"</div><div class="lab-meta">要求：字幕必须在第1秒出现，产品或穿衣困难画面必须在3秒内出现；不要用“this changed my life”这类空泛句，必须具体到术后穿衣难题。</div></section><section class="lab-card lab-spec"><h3>C Caption（视频文案）</h3><div class="lab-output">${LAB_SPEC.caption}</div></section><section class="lab-card lab-spec"><h3>D Hashtag 组合</h3><div class="lab-output">${LAB_SPEC.hashtags}</div><div class="lab-meta">要求：主关键词相关标签保留3-5个，场景标签保留2-3个，不要堆20个泛标签。</div></section><section class="lab-card lab-spec"><h3>E 达人交付要求</h3><div class="lab-meta">视频时长30-45秒；竖屏9:16；需提供公开视频链接、原始素材、封面图；如用于广告，需单独提供Spark Ads Code。发布前需提交草稿审核，不得自行改动核心关键词、前三秒字幕和CTA。</div></section>`;}
+
+// ============================================================
 // 导出
 // ============================================================
 function expCSV(){if(!appData)return;dl('分镜脚本.csv','\uFEFF镜头,开始时间,结束时间,类型,画面描述,文案口播\n'+appData.shots.map(s=>`${s.id},${s.startTime},${s.endTime},"${s.type}","${s.description.replace(/"/g,'""')}","${s.copywriting.replace(/"/g,'""')}"`).join('\n'),'text/csv');}
@@ -1567,6 +1632,7 @@ function resetApp(){
   document.getElementById('selFile').style.display='none';
   document.getElementById('fileInp').value='';
   document.getElementById('aiOut').classList.remove('on');
+  document.getElementById('labPg').style.display='none';
   document.getElementById('uploadPg').style.display='block';
   document.getElementById('anaPg').style.display='none';
   document.getElementById('resPg').style.display='none';
@@ -1577,6 +1643,7 @@ function resetApp(){
 // ============================================================
 setModel(curModel);
 updateGStatus();
+renderLab('frameworks');
 // 检查代理
 fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({__ping:true})})
   .then(r=>r.json())
