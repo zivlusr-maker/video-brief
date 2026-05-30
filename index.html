@@ -609,20 +609,21 @@ async function callAI(claudeBody){
       }
     }
 
-    // 使用支持禁用thinking的模型，fallback链
-    // gemini-2.5-flash 和 gemini-2.0-flash 支持 thinkingBudget:0
-    // gemini-2.5-pro 等强制thinking模式，不传thinkingConfig
+    // Gemini fallback 链：优先使用当前稳定多模态模型，避开对新用户不可用的 gemini-2.0-flash 裸模型。
     const modelConfigs=[
-      {model:'gemini-2.5-flash',  thinking:false},
-      {model:'gemini-2.0-flash',  thinking:false},
+      {model:'gemini-2.5-flash', thinking:true},
+      {model:'gemini-flash-latest', thinking:true},
+      {model:'gemini-2.5-flash-lite', thinking:true},
+      {model:'gemini-2.0-flash-001', thinking:false},
+      {model:'gemini-2.0-flash-lite-001', thinking:false},
     ];
 
-    let lastErr='';
+    const errors=[];
     for(const {model,thinking} of modelConfigs){
       try{
         const genCfg=thinking
-          ?{temperature:0.3,maxOutputTokens:2000}
-          :{temperature:0.3,maxOutputTokens:2000,thinkingConfig:{thinkingBudget:0}};
+          ?{temperature:0.25,maxOutputTokens:4096}
+          :{temperature:0.25,maxOutputTokens:4096,thinkingConfig:{thinkingBudget:0}};
         const gemBody={contents:[{role:'user',parts}],generationConfig:genCfg};
         const r=await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,
@@ -638,11 +639,12 @@ async function callAI(claudeBody){
         if(!text) throw new Error('Empty response from '+model);
         return{content:[{type:'text',text}]};
       }catch(e){
-        lastErr=model+': '+e.message;
-        console.warn('Gemini fallback:',lastErr);
+        const err=model+': '+e.message;
+        errors.push(err);
+        console.warn('Gemini fallback:',err);
       }
     }
-    throw new Error('Gemini 全部模型失败: '+lastErr);
+    throw new Error('Gemini 全部模型失败: '+errors.join(' | '));
   } else {
     // Claude 模式：先走代理
     try{
