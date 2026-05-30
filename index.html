@@ -167,7 +167,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
     <button class="hbtn" id="keyBtn" style="display:flex" onclick="toggleKey()">🔑 API Key</button>
     <button class="hbtn" id="labBtn" style="display:flex" onclick="showLab()">工作台</button>
-    <button class="hbtn" id="backBtn" style="display:none" onclick="resetApp()">← 重新分析</button>
+    <button class="hbtn" id="backBtn" style="display:none" onclick="showLab()">← 返回工作台</button>
   </div>
 </div>
 <div id="keyBanner">
@@ -233,7 +233,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div id="tab-shots">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div style="font-size:15px;font-weight:700">🎬 全部镜头 <span id="shCnt" style="font-size:12px;color:var(--t2);font-weight:400"></span></div>
-        <div style="font-size:12px;color:var(--t2)">点击跳转到脚本行</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="copyall" onclick="saveAllShotsToLibrary()">保存全部片段到库</button>
+          <div style="font-size:12px;color:var(--t2)">点击跳转到脚本行</div>
+        </div>
       </div>
       <div class="sw" id="shGrid"></div>
       <div class="tbrow" id="typeRow"></div>
@@ -241,7 +244,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div id="tab-script" style="display:none">
       <div style="margin-bottom:14px;font-size:15px;font-weight:700">分镜脚本表格</div>
       <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--b)">
-        <table class="stbl"><thead><tr><th>镜头</th><th>时间</th><th>类型</th><th>画面描述</th><th>截图</th><th>文案/口播</th></tr></thead><tbody id="scriptBody"></tbody></table>
+        <table class="stbl"><thead><tr><th>镜头</th><th>时间</th><th>类型</th><th>画面描述</th><th>截图</th><th>文案/口播</th><th>入库</th></tr></thead><tbody id="scriptBody"></tbody></table>
       </div>
     </div>
     <div id="tab-struct" style="display:none">
@@ -718,10 +721,12 @@ function uprog(pct,msg,steps){
 
 async function startAnalysis(file){
   // 切换到分析页
+  document.getElementById('labPg').style.display='none';
   document.getElementById('uploadPg').style.display='none';
   document.getElementById('anaPg').style.display='block';
   document.getElementById('resPg').style.display='none';
   document.getElementById('backBtn').style.display='block';
+  document.getElementById('backBtn').textContent='← 返回工作台';
   document.getElementById('hdrSub').textContent='● 分析中 · '+file.name;
 
   const steps=[
@@ -740,7 +745,7 @@ async function startAnalysis(file){
 
   let result;
   try{
-    const imgs=frames.filter(f=>f.url).slice(0,4).map(f=>({
+    const imgs=frames.filter(f=>f.url).slice(0,12).map(f=>({
       type:'image',source:{type:'base64',media_type:'image/jpeg',data:f.url.split(',')[1]}
     }));
     const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frames.length,dur)}]:[{type:'text',text:buildPrompt(frames.length,dur)}];
@@ -763,6 +768,8 @@ async function startAnalysis(file){
       document.getElementById('keyBtn').style.display='flex';
     }
     result=mockData(frames.length,dur);
+    result.isFallback=true;
+    result.fallbackReason=e.message;
   }
 
   steps[2].st='done';steps[3].st='done';steps[4].st='active';
@@ -772,6 +779,7 @@ async function startAnalysis(file){
   await sleep(500);
 
   result=normalizeAnalysisResult(result,frames,dur);
+  result.sourceName=file.name;
   result.frames=frames;
   appData=result;
   try{
@@ -793,7 +801,7 @@ async function startAnalysis(file){
 }
 
 function buildPrompt(n,dur){
-  return `你是专业短视频内容策划师。分析这${n}个关键帧（总时长约${dur.toFixed(0)}秒），只返回JSON，不要任何额外文字：\n{"metrics":{"firstAppear":5.2,"productDuration":8.0,"productRatio":24,"totalDuration":${dur.toFixed(1)},"shotCount":${n}},"tip":"一句优化建议","shots":[{"id":1,"startTime":0,"endTime":4.5,"type":"痛点放大","description":"2-3句画面描述","copywriting":"English voiceover copy"}]}\n镜头类型只能用：痛点放大、产品展示、使用场景、效果对比、行动引导、节日特写、钩子开场。生成全部${n}个镜头，时间连续且总和等于${dur.toFixed(1)}秒。`;
+  return `你是专业短视频内容策划师。你会看到从用户上传视频中按时间顺序抽取的${n}个关键帧（总时长约${dur.toFixed(0)}秒）。请只基于这些关键帧分析，不要套用通用模板。只返回JSON，不要任何额外文字：\n{"metrics":{"firstAppear":5.2,"productDuration":8.0,"productRatio":24,"totalDuration":${dur.toFixed(1)},"shotCount":${n}},"tip":"一句优化建议","shots":[{"id":1,"startTime":0,"endTime":4.5,"type":"痛点放大","description":"2-3句画面描述，要写出画面中真实出现的人物/产品/场景/字幕","copywriting":"English voiceover copy"}]}\n镜头类型只能用：痛点放大、产品展示、使用场景、效果对比、行动引导、节日特写、钩子开场。生成全部${n}个镜头，时间连续且总和等于${dur.toFixed(1)}秒。`;
 }
 
 function mockData(n,dur){
@@ -833,7 +841,9 @@ function normalizeAnalysisResult(result,frames,dur){
       shotCount:normalizedShots.length
     },
     tip:d.tip||d.suggestion||fallback.tip,
-    shots:normalizedShots
+    shots:normalizedShots,
+    isFallback:!!d.isFallback,
+    fallbackReason:d.fallbackReason||''
   };
 }
 
@@ -849,7 +859,7 @@ function renderResults(d){
     {v:m.totalDuration+'秒',l:'视频总时长',h:'15-60秒最佳'},
     {v:m.shotCount+'个',l:'镜头数量',h:'2-3秒/镜头'}
   ].map(c=>`<div class="mc"><div class="mv">${c.v}</div><div class="ml">${c.l}</div><div class="mh">${c.h}</div></div>`).join('');
-  document.getElementById('tipBar').textContent='💡 '+d.tip;
+  document.getElementById('tipBar').textContent=(d.isFallback?'⚠️ 当前是兜底演示数据，不是AI真实拆解。原因：'+(d.fallbackReason||'AI未返回有效结果')+'。':'💡 ')+d.tip;
   document.getElementById('shCnt').textContent=`（${d.shots.length}个分镜）`;
 
   document.getElementById('shGrid').innerHTML=d.shots.map((s,i)=>{
@@ -864,7 +874,7 @@ function renderResults(d){
   document.getElementById('scriptBody').innerHTML=d.shots.map((s,i)=>{
     const t=gtc(s.type),f=d.frames&&d.frames[i];
     const th=f&&f.url?`<img src="${f.url}" style="width:80px;height:45px;border-radius:6px;object-fit:cover;">`:`<div style="width:80px;height:45px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px">🎬</div>`;
-    return`<tr id="sr${i}"><td><strong style="color:var(--gold)">#${s.id}</strong></td><td style="font-size:12px;color:var(--t2);white-space:nowrap">${s.startTime.toFixed(2)}s<br>${s.endTime.toFixed(2)}s</td><td><span style="background:${t.bg};color:${t.c};padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">${s.type}</span></td><td>${s.description}</td><td>${th}</td><td style="color:var(--t2);font-size:12px">${s.copywriting}</td></tr>`;
+    return`<tr id="sr${i}"><td><strong style="color:var(--gold)">#${s.id}</strong></td><td style="font-size:12px;color:var(--t2);white-space:nowrap">${s.startTime.toFixed(2)}s<br>${s.endTime.toFixed(2)}s</td><td><span style="background:${t.bg};color:${t.c};padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">${s.type}</span></td><td>${s.description}</td><td>${th}</td><td style="color:var(--t2);font-size:12px">${s.copywriting}</td><td><button class="copyall" onclick="saveShotToLibrary(${i})">保存</button></td></tr>`;
   }).join('');
 
   const tot=m.totalDuration;
@@ -1517,6 +1527,36 @@ function saveCurrentVideoToLibrary(){
   const item={id:'video_'+Date.now(),name:document.getElementById('libVideoName').value.trim()||'未命名爆款视频',url:document.getElementById('libVideoUrl').value.trim(),category:document.getElementById('libCategory').value.trim(),framework:fwName,formula:fw['短视频底层结构公式‼️']||'',frameworkLogic:fw['核心逻辑']||'',reusable:document.getElementById('libReusable').value.trim()||buildReusableNotes(appData),metrics:appData.metrics,shots:appData.shots,savedAt:new Date().toISOString()};
   d.videos=[item,...(d.videos||[])].slice(0,50);setAssignData(d);alert('已保存到爆款视频库');
 }
+function buildShotLibraryItem(s,i){
+  return {
+    id:'seg_'+Date.now()+'_'+i,
+    videoName:appData?.sourceName||'已上传视频',
+    shotId:s.id||i+1,
+    time:`${Number(s.startTime||0).toFixed(2)}s-${Number(s.endTime||0).toFixed(2)}s`,
+    type:s.type||'未分类',
+    description:s.description||'',
+    copywriting:s.copywriting||'',
+    text:`镜头${s.id||i+1}｜${Number(s.startTime||0).toFixed(2)}s-${Number(s.endTime||0).toFixed(2)}s｜${s.type||'未分类'}\n画面：${s.description||''}\n口播：${s.copywriting||''}`,
+    savedAt:new Date().toISOString()
+  };
+}
+function saveShotToLibrary(i){
+  if(!appData?.shots?.[i]){alert('没有可保存的片段');return;}
+  const d=getAssignData();
+  d.segments=d.segments||[];
+  d.segments.unshift(buildShotLibraryItem(appData.shots[i],i));
+  setAssignData(d);
+  alert('已保存镜头 #'+(appData.shots[i].id||i+1)+' 到爆款片段库');
+}
+function saveAllShotsToLibrary(){
+  if(!appData?.shots?.length){alert('请先完成视频拆解');return;}
+  const d=getAssignData();
+  d.segments=d.segments||[];
+  const items=appData.shots.map((s,i)=>buildShotLibraryItem(s,i));
+  d.segments=[...items,...d.segments].slice(0,200);
+  setAssignData(d);
+  alert(`已保存 ${items.length} 个片段到爆款片段库，可在工作台「爆款视频库」查看`);
+}
 function saveKOLProfile(){
   const d=getAssignData();
   d.kol={name:document.getElementById('kolName').value.trim(),country:document.getElementById('kolCountry').value.trim(),type:document.getElementById('kolType').value.trim(),style:document.getElementById('kolStyle').value.trim(),audience:document.getElementById('kolAudience').value.trim(),fit:document.getElementById('kolFit').value.trim(),savedAt:new Date().toISOString()};
@@ -1595,11 +1635,23 @@ const LAB_SPEC={primary:'post surgery recovery clothes',secondary:['post surgery
 let labCurrent='frameworks';
 function labNavHtml(){return [['frameworks','01','十大框架库'],['videos','02','爆款视频库'],['kol','03','KOL 档案库'],['tool','04','视频拆解工具'],['brief','05','Brief 生成器'],['publish','06','发布规范']].map(n=>`<button class="${labCurrent===n[0]?'on':''}" onclick="${n[0]==='tool'?'openAnalyzer()':`renderLab('${n[0]}')`}"><small>${n[1]}</small>${n[2]}</button>`).join('');}
 function showLab(){document.getElementById('labPg').style.display='block';document.getElementById('uploadPg').style.display='none';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='none';document.getElementById('hdrSub').textContent='● 术后康复衣服素材工作台';renderLab(labCurrent||'frameworks');}
-function openAnalyzer(){document.getElementById('labPg').style.display='none';document.getElementById('uploadPg').style.display='block';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('hdrSub').textContent='● 第4步：上传爆款视频进行拆解';}
+function openAnalyzer(){document.getElementById('labPg').style.display='none';document.getElementById('uploadPg').style.display='block';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='block';document.getElementById('backBtn').textContent='← 返回工作台';document.getElementById('hdrSub').textContent='● 第4步：上传爆款视频进行拆解';}
 function labShell(inner){return `<div class="lab-shell"><aside class="lab-side"><div><div class="lab-brand">Recovery<span>AI</span><br>Viral Lab</div><div class="lab-kicker">Recovery Clothing · TikTok</div></div><nav class="lab-nav">${labNavHtml()}</nav><div class="lab-foot"><div>产品：<b>术后康复衣服</b></div><div>市场：US · 康复护理 / Adaptive Apparel</div><div>任务：框架库 → 拆解 → Brief → SEO发布规范</div></div></aside><main class="lab-main">${inner}</main></div>`;}
 function renderLab(section='frameworks'){labCurrent=section;const pg=document.getElementById('labPg');if(!pg)return;const views={frameworks:labFrameworks,videos:labVideos,kol:labKol,brief:labBrief,publish:labPublish};pg.innerHTML=labShell((views[section]||labFrameworks)());}
 function labFrameworks(){return `<div class="lab-eyebrow">Framework Library</div><h1 class="lab-title">十大爆款框架结构库</h1><p class="lab-desc">这里把课程的十大底层公式全部转成术后康复衣服可直接拍摄的内容框架。每个框架都能作为视频拆解、Brief生成和发布规范的知识库。</p><div class="lab-grid">${LAB_FRAMEWORKS.map(f=>`<article class="lab-card"><div class="lab-num">${f.no}</div><h3>${f.name}</h3><div class="lab-en">${f.en}</div><div><span class="lab-pill">${f.formula}</span><span class="lab-pill">${f.hook}</span></div><div class="lab-meta"><b>适用场景：</b>${f.scene}</div><div class="lab-meta"><b>结构步骤：</b>${f.steps}</div><div class="lab-meta"><b>适合达人：</b>${f.fit}</div><div class="lab-hook">Hook 示例：${f.hookEx}</div></article>`).join('')}</div>`;}
-function labVideos(){return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">先放3条可作为作业样例的爆款方向。之后你用第4步上传真实视频拆解后，可以把结论补进这里，形成自己的可复用素材库。</p><div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>`;}
+function labVideos(){
+  const d=getAssignData();
+  const savedVideos=d.videos||[];
+  const segments=d.segments||[];
+  const savedHtml=savedVideos.length?`<h2 class="lab-section-title">已保存视频拆解</h2><div class="lab-grid">${savedVideos.slice(0,6).map(v=>`<article class="lab-card"><h3>${v.name}</h3><div class="lab-en">${v.framework||'Saved Deconstruction'}</div><div class="lab-meta"><b>来源：</b>${v.url||v.category||'本地上传视频'}</div><div class="lab-meta"><b>可复用点：</b>${(v.reusable||'').replace(/\n/g,'<br>')}</div><div class="lab-meta"><b>片段数：</b>${v.shots?.length||0} · ${(v.savedAt||'').slice(0,10)}</div></article>`).join('')}</div>`:'';
+  const segHtml=segments.length?`<h2 class="lab-section-title">爆款片段库</h2><div class="lab-grid">${segments.slice(0,12).map(s=>`<article class="lab-card"><div class="lab-num">#${s.shotId}</div><h3>${s.type}</h3><div class="lab-en">${s.videoName} · ${s.time}</div><div class="lab-meta"><b>画面：</b>${s.description}</div><div class="lab-hook">口播：${s.copywriting||'待补充'}</div><button class="lab-action alt" style="margin-top:12px;padding:9px 14px;font-size:12px" onclick="copySegmentText('${s.id}')">复制片段文字</button></article>`).join('')}</div>`:'';
+  return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">这里会沉淀两类资产：完整视频拆解，以及每个镜头片段的文字卡。你在第4步拆解后点击“保存全部片段到库”，后续就能直接回来复用。</p><div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>${savedHtml}${segHtml}`;
+}
+function copySegmentText(id){
+  const seg=(getAssignData().segments||[]).find(s=>s.id===id);
+  if(!seg)return alert('没有找到这个片段');
+  navigator.clipboard.writeText(seg.text||'').then(()=>alert('已复制片段文字'));
+}
 function labKol(){return `<div class="lab-eyebrow">Creator Roster</div><h1 class="lab-title">KOL 档案库</h1><p class="lab-desc">这位虚拟达人用于完成作业第3步：在KOL库中录入一个适合品牌的达人，并用她来生成定制化Brief。</p><section class="lab-card lab-profile"><div class="lab-avatar">AI</div><div><h3>${LAB_KOL.name} <span style="font-size:13px;color:#63c8ff;font-family:ui-monospace,Menlo,monospace">${LAB_KOL.platform}</span></h3><div class="lab-stats"><div class="lab-stat"><b>${LAB_KOL.fans}</b>粉丝</div><div class="lab-stat"><b>${LAB_KOL.avg}</b>平均播放</div><div class="lab-stat"><b>${LAB_KOL.er}</b>互动率</div></div>${['direction','audience','style','rate','stage','why'].map(k=>`<div class="lab-meta"><b>${{direction:'内容方向',audience:'受众画像',style:'风格',rate:'报价',stage:'合作阶段',why:'为何契合'}[k]}：</b>${LAB_KOL[k]}</div>`).join('')}</div></section>`;}
 function labBrief(){const opts=LAB_FRAMEWORKS.map(f=>`<option value="${f.no}">${f.no} ${f.name}｜${f.formula}</option>`).join('');return `<div class="lab-eyebrow">Brief Generator</div><h1 class="lab-title">Brief 生成器</h1><p class="lab-desc">选择虚拟KOL和视频框架，一键生成术后康复衣服的达人拍摄Brief。这里先做稳定可交作业版本，后续可再接入AI模型自动扩写。</p><section class="lab-card"><div class="lab-form"><div><div class="lab-field"><label>选择网红</label><select class="lab-select" id="labKolSel"><option>${LAB_KOL.name}（术后恢复vlog / caregiver tips）</option></select></div><div class="lab-field"><label>选择框架</label><select class="lab-select" id="labFwSel">${opts}</select></div><div class="lab-field"><label>产品核心卖点</label><textarea class="lab-textarea" id="labPoints">前开襟/侧开扣，不需要大幅抬手；柔软亲肤面料，减少伤口附近摩擦；适合换药、复诊、居家恢复；可放置引流管或小物；比普通T恤更体面。</textarea></div><button class="lab-action" onclick="generateLabBrief()">生成定制 Brief</button></div><div><div class="lab-card no-shadow" style="background:rgba(9,22,44,.72)"><h3>达人快照</h3><div class="lab-meta"><b>${LAB_KOL.name}</b> · ${LAB_KOL.fans}粉 · ${LAB_KOL.er}互动率</div><div class="lab-meta">${LAB_KOL.why}</div></div></div></div><hr style="border:none;border-top:1px solid rgba(104,184,255,.18);margin:22px 0"><div class="lab-output" id="labBriefOut">Brief 将显示在这里。</div></section>`;}
 function generateLabBrief(){const no=document.getElementById('labFwSel').value;const f=LAB_FRAMEWORKS.find(x=>x.no===no)||LAB_FRAMEWORKS[0];const p=document.getElementById('labPoints').value.trim();document.getElementById('labBriefOut').textContent=`《${LAB_KOL.name} 术后康复衣服 TikTok Brief》\n\n1. 视频目标\n围绕“post surgery recovery clothes”拍摄一条30-45秒真实生活短视频，让观众理解：术后恢复期的穿衣、换药、复诊并不是普通宽松衣服能解决的事。\n\n2. 命中框架\n${f.no} ${f.name}｜${f.formula}\n开头钩子类型：${f.hook}\n核心逻辑：${f.steps}\n\n3. 达人设定\n达人以术后恢复vlog/照护者tips口吻拍摄，语气真实、温柔、实用，不做夸张医疗承诺。受众是美国28-55岁女性、术后患者、家属照护者和正在准备手术的人。\n\n4. 必拍镜头\n- 0-3秒：${f.hookEx}\n- 痛点：普通T恤/睡衣在抬手、拉扯、换药时造成不便。\n- 产品：展示前开襟/侧开扣/口袋/面料细节。\n- 使用：床边穿衣、换药前后、复诊出门、居家活动。\n- 信任：真实体验一句话 + 评论/尺码卡/护理建议画面。\n- CTA：Save this for your recovery checklist / Check the size guide.\n\n5. 产品卖点\n${p}\n\n6. 禁止项\n不得承诺治愈、止痛、加速伤口愈合；不得冒充医生背书；不得展示过度敏感伤口画面；不要把产品说成医疗器械。`; }
