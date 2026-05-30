@@ -133,19 +133,19 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <button class="mbtn" id="mb-claude" onclick="setModel('claude')">Claude</button>
       <button class="mbtn" id="mb-gemini" onclick="setModel('gemini')">Gemini</button>
     </div>
-    <button class="hbtn" id="keyBtn" style="display:none" onclick="toggleKey()">🔑 API Key</button>
+    <button class="hbtn" id="keyBtn" style="display:flex" onclick="toggleKey()">🔑 API Key</button>
     <button class="hbtn" id="backBtn" style="display:none" onclick="resetApp()">← 重新分析</button>
   </div>
 </div>
 <div id="keyBanner">
   <div class="krow">
     <span style="font-size:12px;color:var(--ac2);font-weight:700;flex-shrink:0">🔑 Claude Key</span>
-    <input class="ki" type="password" id="kiClaude" placeholder="sk-ant-api03-...">
+    <input class="ki" type="password" id="kiClaude" placeholder="sk-ant-api03-..." onfocus="clearMaskedKey(this)">
     <button class="ksave" style="background:linear-gradient(135deg,var(--ac),#8b5cf6)" onclick="saveKey('claude')">保存</button>
     <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-size:11px;color:var(--ac2)">获取</a>
     <div style="width:1px;height:20px;background:var(--b);flex-shrink:0"></div>
     <span style="font-size:12px;color:#4285f4;font-weight:700;flex-shrink:0">🔑 Gemini Key</span>
-    <input class="ki" type="password" id="kiGemini" placeholder="AIzaSy...">
+    <input class="ki" type="password" id="kiGemini" placeholder="AIzaSy..." onfocus="clearMaskedKey(this)">
     <button class="ksave" style="background:linear-gradient(135deg,#4285f4,#0f9d58)" onclick="saveKey('gemini')">保存</button>
     <a href="https://aistudio.google.com/apikey" target="_blank" style="font-size:11px;color:#4285f4">获取（免费）</a>
   </div>
@@ -462,8 +462,16 @@ const MKEYS=Object.keys(MATS);
 let appData=null, aiScript=null, productImgB64=null, productImgMime='image/jpeg', sceneImgCache={}, curCat=MKEYS[0], matQ='', curModel=localStorage.getItem('vvt_model')||'gemini';
 const AK='vvt_akey', GK='vvt_gkey';
 const ASSIGN_KEY='vvt_assignment_workspace';
-const getAKey=()=>localStorage.getItem(AK)||'';
-const getGKey=()=>localStorage.getItem(GK)||'';
+function cleanStoredKey(keyName){
+  const k=localStorage.getItem(keyName)||'';
+  if(k.includes('•')){
+    localStorage.removeItem(keyName);
+    return '';
+  }
+  return k;
+}
+const getAKey=()=>cleanStoredKey(AK);
+const getGKey=()=>cleanStoredKey(GK);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 function getAssignData(){
@@ -495,15 +503,18 @@ function toggleKey(){
   const b=document.getElementById('keyBanner');
   b.style.display=b.style.display==='none'?'block':'none';
 }
+function clearMaskedKey(el){
+  if(el.value.includes('•')) el.value='';
+}
 function saveKey(type){
   if(type==='claude'){
     const k=document.getElementById('kiClaude').value.trim();
-    if(!k.startsWith('sk-')){alert('请输入正确的 Claude Key（以 sk- 开头）');return;}
+    if(k.includes('•')||!k.startsWith('sk-')||k.length<20){alert('请粘贴完整的 Claude Key，不要保存脱敏后的占位符');return;}
     localStorage.setItem(AK,k);
     alert('✅ Claude Key 已保存！');
   } else {
     const k=document.getElementById('kiGemini').value.trim();
-    if(!k.startsWith('AIza')){alert('请输入正确的 Gemini Key（以 AIzaSy 开头）');return;}
+    if(k.includes('•')||!k.startsWith('AIza')||k.length<25){alert('请粘贴完整的 Gemini Key，不要保存脱敏后的占位符');return;}
     localStorage.setItem(GK,k);
     setModel('gemini');
     updateGStatus();
@@ -511,7 +522,7 @@ function saveKey(type){
   }
   if(getAKey()||getGKey()){
     document.getElementById('keyBanner').style.display='none';
-    document.getElementById('keyBtn').style.display='none';
+    document.getElementById('keyBtn').style.display='flex';
   }
 }
 function updateGStatus(){
@@ -523,8 +534,20 @@ function updateGStatus(){
 // ============================================================
 // API 代理
 // ============================================================
+async function fetchWithTimeout(url,options={},ms=25000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }catch(e){
+    if(e.name==='AbortError') throw new Error('AI请求超时，请检查API Key或网络后重试');
+    throw e;
+  }finally{
+    clearTimeout(timer);
+  }
+}
 async function callProxy(body){
-  const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r=await fetchWithTimeout('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},25000);
   const d=await r.json().catch(()=>({error:'Parse error '+r.status}));
   if(!r.ok||d.error){
     const errMsg=typeof d.error==='object'?(d.error.message||JSON.stringify(d.error)):String(d.error||'Proxy '+r.status);
@@ -555,8 +578,6 @@ async function callAI(claudeBody){
     const modelConfigs=[
       {model:'gemini-2.5-flash',  thinking:false},
       {model:'gemini-2.0-flash',  thinking:false},
-      {model:'gemini-2.5-pro',    thinking:true},
-      {model:'gemini-3.1-pro-preview', thinking:true},
     ];
 
     let lastErr='';
@@ -566,9 +587,10 @@ async function callAI(claudeBody){
           ?{temperature:0.3,maxOutputTokens:2000}
           :{temperature:0.3,maxOutputTokens:2000,thinkingConfig:{thinkingBudget:0}};
         const gemBody={contents:[{role:'user',parts}],generationConfig:genCfg};
-        const r=await fetch(
+        const r=await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,
-          {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(gemBody)}
+          {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(gemBody)},
+          25000
         );
         const d=await r.json();
         if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
@@ -592,9 +614,9 @@ async function callAI(claudeBody){
       // 代理 503（无 key）→ 直连
       if(e.message.includes('503')||e.message.includes('ANTHROPIC_API_KEY')){
         const key=getAKey();if(!key)throw new Error('NO_KEY');
-        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        const r=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify(claudeBody)});
+          body:JSON.stringify(claudeBody)},25000);
         const d=await r.json();
         if(!r.ok)throw new Error(d.error?.message||'Claude '+r.status);
         return d;
@@ -602,6 +624,14 @@ async function callAI(claudeBody){
       throw e;
     }
   }
+}
+
+function withTimeout(promise,ms,message){
+  let timer;
+  const timeout=new Promise((_,reject)=>{
+    timer=setTimeout(()=>reject(new Error(message||'请求超时')),ms);
+  });
+  return Promise.race([promise,timeout]).finally(()=>clearTimeout(timer));
 }
 
 // ============================================================
@@ -676,11 +706,15 @@ async function startAnalysis(file){
 
   let result;
   try{
-    const imgs=frames.filter(f=>f.url).slice(0,8).map(f=>({
+    const imgs=frames.filter(f=>f.url).slice(0,4).map(f=>({
       type:'image',source:{type:'base64',media_type:'image/jpeg',data:f.url.split(',')[1]}
     }));
     const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frames.length,dur)}]:[{type:'text',text:buildPrompt(frames.length,dur)}];
-    const data=await callAI({model:'claude-opus-4-5',max_tokens:2000,messages:[{role:'user',content}]});
+    const data=await withTimeout(
+      callAI({model:'claude-opus-4-5',max_tokens:1200,messages:[{role:'user',content}]}),
+      18000,
+      'AI分析超过18秒，已自动切换为本地兜底拆解'
+    );
     const txt=data.content?.[0]?.text||'';
     // 清理 thinking 标签和 markdown，精确提取 JSON
     const clean=txt.replace(/<thinking>[\s\S]*?<\/thinking>/g,'').replace(/```json\n?|```/g,'').trim();
@@ -703,9 +737,19 @@ async function startAnalysis(file){
   steps[4].st='done';uprog(100,'✅ 完成！',steps);
   await sleep(500);
 
+  result=normalizeAnalysisResult(result,frames,dur);
   result.frames=frames;
   appData=result;
-  renderResults(result);
+  try{
+    renderResults(result);
+  }catch(e){
+    console.warn('Render error:',e.message);
+    result=normalizeAnalysisResult(mockData(frames.length||5,dur),frames,dur);
+    result.tip='⚠️ AI结果格式不完整，已自动切换为兜底拆解数据。原错误：'+e.message;
+    result.frames=frames;
+    appData=result;
+    renderResults(result);
+  }
 
   // 切换到结果页
   document.getElementById('anaPg').style.display='none';
@@ -719,11 +763,44 @@ function buildPrompt(n,dur){
 }
 
 function mockData(n,dur){
+  n=Math.max(1,n||5);
   const types=['痛点放大','产品展示','使用场景','效果对比','行动引导'];
   const sd=dur/n;
   return{metrics:{firstAppear:parseFloat((sd*2).toFixed(1)),productDuration:parseFloat((dur*0.2).toFixed(1)),productRatio:20,totalDuration:parseFloat(dur.toFixed(1)),shotCount:n},
     tip:'⚠️ AI分析失败，显示演示数据，请检查API Key配置',
     shots:Array.from({length:n},(_,i)=>({id:i+1,startTime:parseFloat((i*sd).toFixed(2)),endTime:parseFloat(((i+1)*sd).toFixed(2)),type:types[i%5],description:'演示数据 — 请配置正确的API Key',copywriting:'演示文案'}))};
+}
+
+function normalizeAnalysisResult(result,frames,dur){
+  const fallback=mockData(frames?.length||5,dur||30);
+  const d=result&&typeof result==='object'?result:fallback;
+  const shots=Array.isArray(d.shots)&&d.shots.length?d.shots:fallback.shots;
+  const total=Number(d.metrics?.totalDuration)||Number(dur)||fallback.metrics.totalDuration||30;
+  const normalizedShots=shots.map((s,i)=>{
+    const span=total/shots.length;
+    const start=Number(s.startTime);
+    const end=Number(s.endTime);
+    return {
+      id:Number(s.id)||i+1,
+      startTime:Number.isFinite(start)?start:parseFloat((i*span).toFixed(2)),
+      endTime:Number.isFinite(end)?end:parseFloat(((i+1)*span).toFixed(2)),
+      type:s.type||fallback.shots[i%fallback.shots.length].type,
+      description:s.description||s.visual||s.scene||'AI已完成分析，但该镜头描述缺失',
+      copywriting:s.copywriting||s.script||s.voiceover||s.caption||''
+    };
+  });
+  const productDuration=Number(d.metrics?.productDuration)||fallback.metrics.productDuration;
+  return {
+    metrics:{
+      firstAppear:Number(d.metrics?.firstAppear)||fallback.metrics.firstAppear,
+      productDuration,
+      productRatio:Number(d.metrics?.productRatio)||Math.round(productDuration/total*100)||fallback.metrics.productRatio,
+      totalDuration:parseFloat(total.toFixed(1)),
+      shotCount:normalizedShots.length
+    },
+    tip:d.tip||d.suggestion||fallback.tip,
+    shots:normalizedShots
+  };
 }
 
 // ============================================================
