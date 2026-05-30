@@ -622,8 +622,8 @@ async function callAI(claudeBody){
     for(const {model,thinking} of modelConfigs){
       try{
         const genCfg=thinking
-          ?{temperature:0.25,maxOutputTokens:4096}
-          :{temperature:0.25,maxOutputTokens:4096,thinkingConfig:{thinkingBudget:0}};
+          ?{temperature:0.25,maxOutputTokens:4096,responseMimeType:'application/json'}
+          :{temperature:0.25,maxOutputTokens:4096,responseMimeType:'application/json',thinkingConfig:{thinkingBudget:0}};
         const gemBody={contents:[{role:'user',parts}],generationConfig:genCfg};
         const r=await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${gKey}`,
@@ -720,6 +720,25 @@ function uprog(pct,msg,steps){
   document.getElementById('anaStatus').textContent=msg;
   document.getElementById('stepsList').innerHTML=steps.map(s=>`<div class="si ${s.st}"><div class="sdot"></div><span>${s.tx}</span></div>`).join('');
 }
+function parseAIAnalysisText(txt){
+  const clean=String(txt||'')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/g,'')
+    .replace(/```json\s*|```/g,'')
+    .trim();
+  const js=clean.indexOf('{'),je=clean.lastIndexOf('}')+1;
+  if(js===-1||je<=js)throw new Error('No JSON in response: '+clean.slice(0,220));
+  const raw=clean.substring(js,je);
+  try{return JSON.parse(raw);}catch(firstErr){
+    const fixed=raw
+      .replace(/[“”]/g,'"')
+      .replace(/[‘’]/g,"'")
+      .replace(/,\s*([}\]])/g,'$1')
+      .replace(/\u0000/g,'');
+    try{return JSON.parse(fixed);}catch(secondErr){
+      throw new Error('AI返回了不完整JSON，原始错误：'+firstErr.message+'；返回片段：'+raw.slice(0,260));
+    }
+  }
+}
 
 async function startAnalysis(file){
   // 切换到分析页
@@ -752,16 +771,12 @@ async function startAnalysis(file){
     }));
     const content=imgs.length>0?[...imgs,{type:'text',text:buildPrompt(frames.length,dur)}]:[{type:'text',text:buildPrompt(frames.length,dur)}];
     const data=await withTimeout(
-      callAI({model:'claude-opus-4-5',max_tokens:1200,messages:[{role:'user',content}]}),
+      callAI({model:'claude-opus-4-5',max_tokens:4096,messages:[{role:'user',content}]}),
       90000,
       'AI分析超过90秒，已自动切换为本地兜底拆解'
     );
     const txt=data.content?.[0]?.text||'';
-    // 清理 thinking 标签和 markdown，精确提取 JSON
-    const clean=txt.replace(/<thinking>[\s\S]*?<\/thinking>/g,'').replace(/```json\n?|```/g,'').trim();
-    const js=clean.indexOf('{'),je=clean.lastIndexOf('}')+1;
-    if(js===-1)throw new Error('No JSON in response');
-    result=JSON.parse(clean.substring(js,je));
+    result=parseAIAnalysisText(txt);
   }catch(e){
     console.warn('AI error:',e.message);
     document.getElementById('anaStatus').textContent='⚠️ AI失败: '+e.message.substring(0,50);
@@ -803,7 +818,11 @@ async function startAnalysis(file){
 }
 
 function buildPrompt(n,dur){
-  return `你是专业短视频内容策划师。你会看到从用户上传视频中按时间顺序抽取的${n}个关键帧（总时长约${dur.toFixed(0)}秒）。请只基于这些关键帧分析，不要套用通用模板。只返回JSON，不要任何额外文字：\n{"metrics":{"firstAppear":5.2,"productDuration":8.0,"productRatio":24,"totalDuration":${dur.toFixed(1)},"shotCount":${n}},"tip":"一句优化建议","shots":[{"id":1,"startTime":0,"endTime":4.5,"type":"痛点放大","description":"2-3句画面描述，要写出画面中真实出现的人物/产品/场景/字幕","copywriting":"English voiceover copy"}]}\n镜头类型只能用：痛点放大、产品展示、使用场景、效果对比、行动引导、节日特写、钩子开场。生成全部${n}个镜头，时间连续且总和等于${dur.toFixed(1)}秒。`;
+  return `你是专业短视频内容策划师。你会看到从用户上传视频中按时间顺序抽取的${n}个关键帧（总时长约${dur.toFixed(0)}秒）。请只基于这些关键帧分析，不要套用通用模板。
+必须返回严格合法 JSON：不要 markdown，不要注释，不要多余解释，不要在字符串里换行；所有双引号都必须转义；每个属性之间必须有逗号。
+JSON结构：
+{"metrics":{"firstAppear":5.2,"productDuration":8.0,"productRatio":24,"totalDuration":${dur.toFixed(1)},"shotCount":${n}},"tip":"一句优化建议","shots":[{"id":1,"startTime":0,"endTime":4.5,"type":"痛点放大","description":"2-3句画面描述，要写出画面中真实出现的人物/产品/场景/字幕","copywriting":"English voiceover copy"}]}
+镜头类型只能用：痛点放大、产品展示、使用场景、效果对比、行动引导、节日特写、钩子开场。生成全部${n}个镜头，时间连续且总和等于${dur.toFixed(1)}秒。`;
 }
 
 function mockData(n,dur){
