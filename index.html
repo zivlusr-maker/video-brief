@@ -1565,14 +1565,17 @@ function buildReusableNotes(d){
   return [`前3秒钩子：${first.copywriting||first.description||'待补充'}`,`产品首现：${m.firstAppear||'-'}秒；露出占比：${m.productRatio||'-'}%`,`主要结构：${top}`,`复用建议：保留原视频的${top||'核心'}节奏，替换为自身产品痛点、卖点证明和CTA。`].join('\n');
 }
 function buildVideoLibraryItem(overrides={}){
+  const product=typeof activeProduct==='function'?activeProduct():{label:'术后康复衣服'};
   const cnt={};(appData?.shots||[]).forEach(s=>cnt[s.type]=(cnt[s.type]||0)+1);
   const mainType=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]?.[0]||'AI拆解';
   return {
     id:overrides.id||'video_'+Date.now(),
+    productId:typeof activeProductId==='function'?activeProductId():'recovery',
+    productName:product.label,
     sourceName:appData?.sourceName||'已上传视频',
     name:overrides.name||appData?.sourceName||'未命名爆款视频',
     url:overrides.url||'',
-    category:overrides.category||'术后康复衣服参考视频',
+    category:overrides.category||`${product.label}参考视频`,
     framework:overrides.framework||mainType,
     formula:overrides.formula||'由AI拆解生成',
     frameworkLogic:overrides.frameworkLogic||'根据上传视频关键帧生成结构和分镜。',
@@ -1590,8 +1593,11 @@ function saveCurrentVideoToLibrary(){
   d.videos=[item,...(d.videos||[])].slice(0,50);setAssignData(d);alert('已保存到爆款视频库');
 }
 function buildShotLibraryItem(s,i){
+  const product=typeof activeProduct==='function'?activeProduct():{label:'术后康复衣服'};
   return {
     id:'seg_'+Date.now()+'_'+i,
+    productId:typeof activeProductId==='function'?activeProductId():'recovery',
+    productName:product.label,
     videoName:appData?.sourceName||'已上传视频',
     shotId:s.id||i+1,
     time:`${Number(s.startTime||0).toFixed(2)}s-${Number(s.endTime||0).toFixed(2)}s`,
@@ -1701,15 +1707,55 @@ const LAB_SPEC_PRESETS=[
   {name:'照护者清单场景',primary:'surgery recovery essentials',secondary:['recovery checklist','caregiver tips','post surgery must haves','home recovery essentials'],reason:'这组词适合触达家属、朋友、伴侣等购买者，他们不一定搜索衣服品类，但会搜索术后回家准备清单。',hook:'What I wish we had before she came home from surgery.',caption:'Adding this to the recovery checklist. It is practical, comfortable, and actually useful for dressing changes, rest days, and follow-up appointments.',hashtags:'#surgeryrecoveryessentials #recoverychecklist #caregivertips #postsurgerycare #homeRecovery #practicalgift #recoverymusthaves',delivery:'视频需以清单/礼物/照护者视角拍摄；产品必须在前5秒出现；结尾引导保存清单。'}
 ];
 const LAB_SPEC=LAB_SPEC_PRESETS[0];
-const LAB_SPEC_KEY='recovery_lab_publish_spec';
+const AROMA_FRAMEWORKS=[
+  {no:'01',formula:'停 → 病 → 药 → 信 → 买',name:'经典痛点型',en:'Pain Amplification',hook:'痛点冲击',scene:'适合从居家异味、睡前难放松、浴室/衣柜闷味、送礼没质感等痛点切入。',steps:'① 0-3秒展示让人皱眉的场景：房间闷、宠物味、睡前焦躁 → ② 放大情绪和生活品质问题 → ③ 香薰产品出场，展示扩香方式、香调、包装质感 → ④ 用真实评价/场景前后感受建信任 → ⑤ 引导保存香调或下单。',fit:'家居生活号、清洁收纳号、睡眠放松号',hookEx:'Your home should not smell like yesterday.'},
+  {no:'02',formula:'药 → 停 → 病 → 药 → 信 → 买',name:'效果前置型',en:'Payoff-First',hook:'效果冲击',scene:'适合先展示“房间瞬间变高级”“睡前仪式感拉满”的结果，再回头解释场景。',steps:'① 开头直接展示点燃/喷洒/插入扩香后的高级氛围 → ② 字幕强调“hotel-like scent at home” → ③ 回放普通房间闷味或杂乱感 → ④ 展开香调、留香、扩香范围 → ⑤ 评价与购买入口。',fit:'氛围感家居号、香水香氛号、生活方式达人',hookEx:'This made my apartment smell like a boutique hotel.'},
+  {no:'03',formula:'停 → A vs B → 药 → 信 → 买',name:'对比碾压型',en:'Before / After',hook:'对比冲击',scene:'适合对比普通空气清新剂、蜡烛、低价香薰与高级香薰的气味层次、包装和使用体验。',steps:'① 分屏：普通喷雾刺鼻 vs 香薰柔和扩散 → ② 展示使用后空间氛围变化 → ③ 解释香调层次/天然感/包装 → ④ 用户反馈/复购/礼物评价 → ⑤ CTA。',fit:'测评号、家居改造号、礼物推荐号',hookEx:'Cheap room spray vs a scent people actually ask about.'},
+  {no:'04',formula:'停(好奇) → 病 → 药 → 信 → 买',name:'好奇悬念型',en:'Curiosity Gap',hook:'好奇悬念',scene:'适合教育用户“为什么别人家一进门就很好闻”，用好奇心带出产品。',steps:'① 抛出问题：“为什么有些家一进门就很贵？” → ② 揭示不是装修，而是气味记忆 → ③ 展示香薰产品和摆放位置 → ④ 说明香调选择 → ⑤ 信任与购买。',fit:'家居审美号、生活技巧号、香氛科普号',hookEx:'The secret to an expensive-smelling home is not furniture.'},
+  {no:'05',formula:'停(他人反应) → 药 → 病 → 信 → 买',name:'社交证明型',en:'Social Proof',hook:'社交证明',scene:'适合礼物属性和访客反馈，用“朋友一进门就问链接”建立种草。',steps:'① 展示朋友/伴侣进门夸香味 → ② 展示香薰产品是什么 → ③ 补充原来家里闷味/宠物味/做饭味 → ④ 评论、复购、礼物反馈叠加 → ⑤ 促单。',fit:'情侣生活号、送礼号、居家vlog达人',hookEx:'Everyone asks what scent this is when they walk in.'},
+  {no:'06',formula:'停(真实场景) → 病 → 药 → 信 → 买',name:'真实体验型(4.0)',en:'Daily Ritual',hook:'真实场景',scene:'适合把香薰自然放进早晨整理、下班回家、睡前、浴室护理等日常仪式。',steps:'① vlog式开场：下班开门/睡前关灯/浴室护理 → ② 说出今天需要放松或去味 → ③ 香薰融入动作 → ④ 7天使用感受/喜欢的香调 → ⑤ 软CTA。',fit:'日常vlog、独居生活号、自我照顾账号',hookEx:'My five-minute reset after work starts with this scent.'},
+  {no:'07',formula:'停(知识钩子) → 病 → 药 → 信 → 买',name:'科普权威型(2.0)',en:'Scent Education',hook:'知识科普',scene:'适合讲香调、前中后调、不同空间选香和留香逻辑，提升专业度。',steps:'① 冷知识：“客厅和卧室不该用同一种香” → ② 解释空间气味需求 → ③ 产品香调对应场景 → ④ 成分/使用安全/评价建信任 → ⑤ CTA。',fit:'香氛科普号、家居美学号、生活方式KOC',hookEx:'Stop using the same scent in every room.'},
+  {no:'08',formula:'停 → 药 → 场景1 → 场景2 → 场景3 → 买',name:'多场景轰炸型',en:'Multi-Room Scenes',hook:'效果冲击',scene:'适合展示一款或一组香薰在卧室、客厅、浴室、衣柜、办公桌的使用场景。',steps:'① 最强画面：卧室睡前氛围 → ② 客厅待客 → ③ 浴室护理 → ④ 衣柜/玄关 → ⑤ 总结适合哪些场景并CTA。',fit:'家居布置号、收纳号、礼物推荐号',hookEx:'One scent collection, five corners of my home.'},
+  {no:'09',formula:'停(拆箱) → 药 → 药 → 信 → 买',name:'开箱种草型',en:'Unboxing',hook:'开箱惊喜',scene:'适合礼盒、套装、包装精致、节日送礼，用视觉和ASMR承接高客单价。',steps:'① 拆箱ASMR/礼盒特写 → ② 展示瓶身/蜡烛/扩香石/香卡 → ③ 描述香调和适合对象 → ④ 送礼反馈/包装细节 → ⑤ 礼物CTA。',fit:'开箱号、礼物推荐号、节日种草号',hookEx:'A gift that makes the whole room feel expensive.'},
+  {no:'10',formula:'停(冲突) → 病 → 反转 → 药 → 买',name:'剧情反转型(3.0)',en:'Conflict Twist',hook:'冲突反转',scene:'适合做轻剧情：以为家里乱，其实是气味不对；以为送礼普通，打开后反转高级。',steps:'① 开头冲突：朋友说家里少了点什么 → ② 主人误以为是装饰 → ③ 反转：是气味氛围 → ④ 香薰产品出场 → ⑤ CTA。',fit:'剧情号、情侣账号、生活方式达人',hookEx:'She said my apartment felt unfinished. It was the scent.'}
+];
+const AROMA_VIDEOS=[
+  {emoji:'🕯️',title:'My apartment smelled expensive in 10 minutes',framework:'02 · 效果前置型',views:'2.6M',note:'先给高级氛围结果，再解释香调和空间。'},
+  {emoji:'🌿',title:'Stop using the same scent in every room',framework:'07 · 科普权威型',views:'1.4M',note:'香调教育适合做长尾搜索和收藏。'},
+  {emoji:'🎁',title:'The gift everyone asked me about',framework:'09 · 开箱种草型',views:'880K',note:'包装和送礼属性强，适合节日节点。'}
+];
+const AROMA_KOL={name:'@scentedbylina',platform:'TikTok（主） + Instagram Reels',fans:'156K',avg:'92K',er:'7.4%',direction:'home fragrance / apartment reset / self-care rituals',audience:'72% 女性，24-44岁，美国城市公寓人群；关注家居氛围、送礼、自我照顾和生活质感。',style:'高级干净、氛围感强、镜头细节丰富，擅长把香味转译成可视化生活场景。',rate:'约 $420 / 条 organic video；节日礼盒档期需提前预约。',stage:'rate_acceptable（适合先小预算试跑1条）',why:'她的内容覆盖“家里变高级、睡前放松、礼物推荐、香调选择”等场景，和香薰产品天然契合。'};
+const AROMA_SPEC_PRESETS=[
+  {name:'家居高级感核心词',primary:'home fragrance',secondary:['luxury home fragrance','apartment scent','room fragrance','home scent diffuser'],reason:'home fragrance 覆盖品类和家居使用场景，比单纯 candle/diffuser 更宽，同时能承接想提升家里气味和氛围的人群。',hook:'This made my apartment smell like a boutique hotel.',caption:'If your space looks good but still feels unfinished, check the scent. This home fragrance adds a clean, cozy, expensive-smelling finish to everyday rooms.',hashtags:'#homefragrance #apartmentscent #luxuryhome #homescent #homedecor #selfcareritual #tiktokmademebuyit',delivery:'视频时长25-45秒；竖屏9:16；前5秒必须出现产品和空间变化；不得宣称治疗失眠、焦虑或疾病；需提供公开视频链接、原始素材和封面图。'},
+  {name:'睡前放松场景',primary:'relaxing bedroom scent',secondary:['bedroom fragrance','sleep routine scent','calming room spray','night routine essentials'],reason:'该词连接睡前仪式和卧室香氛需求，适合做夜间routine内容，但表达上要避免医疗化睡眠承诺。',hook:'My night routine starts when my room smells like this.',caption:'A small scent ritual can make bedtime feel calmer and more intentional. Soft light, clean sheets, and a relaxing bedroom scent are my favorite reset.',hashtags:'#bedroomfragrance #nightroutine #selfcareritual #relaxinghome #homescent #cozybedroom #winddownroutine',delivery:'拍摄睡前场景、床头/灯光/喷洒或扩香动作；避免说“治失眠/改善焦虑”；语气以氛围和仪式感为主。'},
+  {name:'礼物种草场景',primary:'fragrance gift set',secondary:['home fragrance gift','candle gift set','diffuser gift set','gift for her'],reason:'适合节日和生日送礼，用户搜索意图明确，容易承接礼盒、套装和高客单价。',hook:'A gift that makes the whole room feel expensive.',caption:'For the person who already has everything: a fragrance gift set that feels personal, useful, and beautiful enough to leave out on the shelf.',hashtags:'#fragrancegift #giftforher #homefragrance #giftideas #luxurygift #candlelover #holidaygiftguide',delivery:'重点拍包装、拆箱、送礼场景和摆放效果；前3秒出现礼盒；结尾引导保存礼物清单。'}
+];
+const PRODUCT_PROFILES={
+  recovery:{brand:'RecoveryAI',accent:'Recovery Clothing · TikTok',label:'术后康复衣服',header:'术后康复衣服素材工作台',market:'US · 康复护理 / Adaptive Apparel',task:'框架库 → 拆解 → Brief → SEO发布规范',frameworkIntro:'这里把课程的十大底层公式全部转成术后康复衣服可直接拍摄的内容框架。每个框架都能作为视频拆解、Brief生成和发布规范的知识库。',briefIntro:'选择虚拟KOL和视频框架，一键生成术后康复衣服的达人拍摄Brief。',briefProduct:'术后康复衣服',briefKeyword:'post surgery recovery clothes',briefGoal:'围绕“post surgery recovery clothes”拍摄一条30-45秒真实生活短视频，让观众理解：术后恢复期的穿衣、换药、复诊并不是普通宽松衣服能解决的事。',briefAudience:'达人以术后恢复vlog/照护者tips口吻拍摄，语气真实、温柔、实用，不做夸张医疗承诺。受众是美国28-55岁女性、术后患者、家属照护者和正在准备手术的人。',briefShots:['痛点：普通T恤/睡衣在抬手、拉扯、换药时造成不便。','产品：展示前开襟/侧开扣/口袋/面料细节。','使用：床边穿衣、换药前后、复诊出门、居家活动。','信任：真实体验一句话 + 评论/尺码卡/护理建议画面。','CTA：Save this for your recovery checklist / Check the size guide.'],briefDefaultPoints:'前开襟/侧开扣，不需要大幅抬手；柔软亲肤面料，减少伤口附近摩擦；适合换药、复诊、居家恢复；可放置引流管或小物；比普通T恤更体面。',briefBan:'不得承诺治愈、止痛、加速伤口愈合；不得冒充医生背书；不得展示过度敏感伤口画面；不要把产品说成医疗器械。',frameworks:LAB_FRAMEWORKS,videos:LAB_VIDEOS,kol:LAB_KOL,specs:LAB_SPEC_PRESETS},
+  aroma:{brand:'ScentAI',accent:'Home Fragrance · TikTok',label:'香薰产品',header:'香薰产品素材工作台',market:'US · Home Fragrance / Lifestyle Gift',task:'产品档案 → 框架库 → 拆解 → Brief → SEO发布规范',frameworkIntro:'这里把课程的十大底层公式转成香薰产品可直接拍摄的内容框架，覆盖家居氛围、睡前仪式、去味、礼物和香调教育。',briefIntro:'选择虚拟KOL和视频框架，一键生成香薰产品的达人拍摄Brief。',briefProduct:'香薰产品',briefKeyword:'home fragrance',briefGoal:'围绕“home fragrance”拍摄一条25-45秒生活方式短视频，让观众理解：香味是提升空间质感、送礼记忆点和日常仪式感的重要细节。',briefAudience:'达人以家居香氛/生活方式口吻拍摄，语气高级、自然、真实，不做医疗或情绪疗愈承诺。受众是美国24-44岁女性、独居公寓人群、家居爱好者和送礼买家。',briefShots:['痛点：房间闷味、做饭味、宠物味、空间好看但没有记忆点。','产品：展示瓶身/蜡烛/扩香器/香卡/包装细节。','使用：玄关、卧室、浴室、客厅、睡前或下班回家场景。','信任：真实使用感受 + 访客反馈 + 评论/复购/礼物反馈画面。','CTA：Save this scent / Add it to your gift list / Check the scent notes.'],briefDefaultPoints:'高级香调，不刺鼻；适合卧室、客厅、浴室和玄关；包装适合送礼；扩香自然；能把普通空间变得更有氛围和记忆点。',briefBan:'不得宣称治疗失眠、焦虑、头痛或任何疾病；不得夸大“永久留香”；不得使用未经确认的天然/无毒/医用级声明；注意明火安全提示。',frameworks:AROMA_FRAMEWORKS,videos:AROMA_VIDEOS,kol:AROMA_KOL,specs:AROMA_SPEC_PRESETS}
+};
+const PRODUCT_KEY='viral_lab_product_profile';
+const LAB_SPEC_KEY='viral_lab_publish_spec_';
 const CLOUD_SYNC_KEY='recovery_lab_cloud_webhook';
 let labCurrent='frameworks';
+function activeProductId(){return localStorage.getItem(PRODUCT_KEY)||'recovery';}
+function activeProduct(){return PRODUCT_PROFILES[activeProductId()]||PRODUCT_PROFILES.recovery;}
+function setProductProfile(id){
+  if(!PRODUCT_PROFILES[id])return;
+  localStorage.setItem(PRODUCT_KEY,id);
+  renderLab(labCurrent||'frameworks');
+}
+function labSpecKey(){return LAB_SPEC_KEY+activeProductId();}
+function productSwitcherHtml(){
+  const cur=activeProductId();
+  return `<div class="lab-field" style="margin:18px 0 0"><label>当前产品档案</label><select class="lab-select" onchange="setProductProfile(this.value)">${Object.entries(PRODUCT_PROFILES).map(([id,p])=>`<option value="${id}" ${cur===id?'selected':''}>${p.label}</option>`).join('')}</select></div>`;
+}
 function labNavHtml(){return [['frameworks','01','十大框架库'],['videos','02','爆款视频库'],['kol','03','KOL 档案库'],['tool','04','视频拆解工具'],['brief','05','Brief 生成器'],['publish','06','发布规范']].map(n=>`<button class="${labCurrent===n[0]?'on':''}" onclick="${n[0]==='tool'?'openAnalyzer()':`renderLab('${n[0]}')`}"><small>${n[1]}</small>${n[2]}</button>`).join('');}
-function showLab(){document.getElementById('labPg').style.display='block';document.getElementById('uploadPg').style.display='none';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='none';document.getElementById('hdrSub').textContent='● 术后康复衣服素材工作台';renderLab(labCurrent||'frameworks');}
+function showLab(){document.getElementById('labPg').style.display='block';document.getElementById('uploadPg').style.display='none';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='none';document.getElementById('hdrSub').textContent='● '+activeProduct().header;renderLab(labCurrent||'frameworks');}
 function openAnalyzer(){document.getElementById('labPg').style.display='none';document.getElementById('uploadPg').style.display='block';document.getElementById('anaPg').style.display='none';document.getElementById('resPg').style.display='none';document.getElementById('backBtn').style.display='block';document.getElementById('backBtn').textContent='← 返回工作台';document.getElementById('hdrSub').textContent='● 第4步：上传爆款视频进行拆解';}
-function labShell(inner){return `<div class="lab-shell"><aside class="lab-side"><div><div class="lab-brand">Recovery<span>AI</span><br>Viral Lab</div><div class="lab-kicker">Recovery Clothing · TikTok</div></div><nav class="lab-nav">${labNavHtml()}</nav><div class="lab-foot"><div>产品：<b>术后康复衣服</b></div><div>市场：US · 康复护理 / Adaptive Apparel</div><div>任务：框架库 → 拆解 → Brief → SEO发布规范</div></div></aside><main class="lab-main">${inner}</main></div>`;}
+function labShell(inner){const p=activeProduct();return `<div class="lab-shell"><aside class="lab-side"><div><div class="lab-brand">${p.brand.replace('AI','')}<span>AI</span><br>Viral Lab</div><div class="lab-kicker">${p.accent}</div>${productSwitcherHtml()}</div><nav class="lab-nav">${labNavHtml()}</nav><div class="lab-foot"><div>产品：<b>${p.label}</b></div><div>市场：${p.market}</div><div>任务：${p.task}</div></div></aside><main class="lab-main">${inner}</main></div>`;}
 function renderLab(section='frameworks'){labCurrent=section;const pg=document.getElementById('labPg');if(!pg)return;const views={frameworks:labFrameworks,videos:labVideos,kol:labKol,brief:labBrief,publish:labPublish};pg.innerHTML=labShell((views[section]||labFrameworks)());}
-function labFrameworks(){return `<div class="lab-eyebrow">Framework Library</div><h1 class="lab-title">十大爆款框架结构库</h1><p class="lab-desc">这里把课程的十大底层公式全部转成术后康复衣服可直接拍摄的内容框架。每个框架都能作为视频拆解、Brief生成和发布规范的知识库。</p><div class="lab-grid">${LAB_FRAMEWORKS.map(f=>`<article class="lab-card"><div class="lab-num">${f.no}</div><h3>${f.name}</h3><div class="lab-en">${f.en}</div><div><span class="lab-pill">${f.formula}</span><span class="lab-pill">${f.hook}</span></div><div class="lab-meta"><b>适用场景：</b>${f.scene}</div><div class="lab-meta"><b>结构步骤：</b>${f.steps}</div><div class="lab-meta"><b>适合达人：</b>${f.fit}</div><div class="lab-hook">Hook 示例：${f.hookEx}</div></article>`).join('')}</div>`;}
+function labFrameworks(){const p=activeProduct();return `<div class="lab-eyebrow">Framework Library</div><h1 class="lab-title">十大爆款框架结构库</h1><p class="lab-desc">${p.frameworkIntro}</p><div class="lab-grid">${p.frameworks.map(f=>`<article class="lab-card"><div class="lab-num">${f.no}</div><h3>${f.name}</h3><div class="lab-en">${f.en}</div><div><span class="lab-pill">${f.formula}</span><span class="lab-pill">${f.hook}</span></div><div class="lab-meta"><b>适用场景：</b>${f.scene}</div><div class="lab-meta"><b>结构步骤：</b>${f.steps}</div><div class="lab-meta"><b>适合达人：</b>${f.fit}</div><div class="lab-hook">Hook 示例：${f.hookEx}</div></article>`).join('')}</div>`;}
 function getCloudWebhook(){return localStorage.getItem(CLOUD_SYNC_KEY)||'';}
 function saveCloudWebhook(){
   const url=document.getElementById('cloudWebhook')?.value.trim()||'';
@@ -1721,7 +1767,7 @@ async function syncLibraryToCloud(mode='all'){
   const url=getCloudWebhook();
   if(!url){alert('请先填写 n8n / Google Apps Script Webhook URL');return;}
   const d=getAssignData();
-  const payload={source:'RecoveryAI Viral Lab',mode,ts:new Date().toISOString(),videos:d.videos||[],segments:d.segments||[],kol:d.kol||null,publishSpec:getPublishSpec()};
+  const payload={source:'Viral Lab',productId:activeProductId(),productName:activeProduct().label,mode,ts:new Date().toISOString(),videos:d.videos||[],segments:d.segments||[],kol:d.kol||activeProduct().kol||null,publishSpec:getPublishSpec()};
   if(mode==='current'&&appData?.shots?.length){
     payload.currentVideo=buildVideoLibraryItem({name:appData.sourceName||'当前视频'});
     payload.currentSegments=appData.shots.map((s,i)=>buildShotLibraryItem(s,i));
@@ -1741,21 +1787,22 @@ function labVideos(){
   const cloudHtml=`<section class="lab-card lab-spec"><h3>云表同步</h3><div class="lab-meta">填写 n8n Webhook URL 后，可以把第4步保存的视频拆解和片段同步到 Google Sheet 或飞书多维表。不要在前端填写 Google/飞书密钥，密钥放在 n8n 里。</div><div class="lab-form" style="margin-top:12px"><div class="lab-field"><label>Webhook URL</label><input class="lab-input" id="cloudWebhook" value="${getCloudWebhook()}" placeholder="https://你的n8n域名/webhook/..."></div><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><button class="lab-action" onclick="saveCloudWebhook()">保存Webhook</button><button class="lab-action alt" onclick="syncLibraryToCloud('all')">同步全部库</button><button class="lab-action alt" onclick="syncLibraryToCloud('current')">同步当前视频</button></div></div></section>`;
   const savedHtml=savedVideos.length?`<h2 class="lab-section-title">已保存视频拆解</h2><div class="lab-grid">${savedVideos.slice(0,6).map(v=>`<article class="lab-card"><h3>${v.name}</h3><div class="lab-en">${v.framework||'Saved Deconstruction'}</div><div class="lab-meta"><b>来源：</b>${v.url||v.category||'本地上传视频'}</div><div class="lab-meta"><b>可复用点：</b>${(v.reusable||'').replace(/\n/g,'<br>')}</div><div class="lab-meta"><b>片段数：</b>${v.shots?.length||0} · ${(v.savedAt||'').slice(0,10)}</div></article>`).join('')}</div>`:'';
   const segHtml=segments.length?`<h2 class="lab-section-title">爆款片段库</h2><div class="lab-grid">${segments.slice(0,12).map(s=>`<article class="lab-card"><div class="lab-num">#${s.shotId}</div><h3>${s.type}</h3><div class="lab-en">${s.videoName} · ${s.time}</div><div class="lab-meta"><b>画面：</b>${s.description}</div><div class="lab-hook">口播：${s.copywriting||'待补充'}</div><button class="lab-action alt" style="margin-top:12px;padding:9px 14px;font-size:12px" onclick="copySegmentText('${s.id}')">复制片段文字</button></article>`).join('')}</div>`:'';
-  return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">这里会沉淀两类资产：完整视频拆解，以及每个镜头片段的文字卡。你在第4步拆解后点击“保存全部片段到库”，后续换新视频也不会覆盖旧记录。</p>${cloudHtml}<div class="lab-list">${LAB_VIDEOS.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>${savedHtml}${segHtml}`;
+  const p=activeProduct();
+  return `<div class="lab-eyebrow">Swipe File</div><h1 class="lab-title">爆款视频库（已拆解入库）</h1><p class="lab-desc">这里会沉淀两类资产：完整视频拆解，以及每个镜头片段的文字卡。你在第4步拆解后点击“保存全部片段到库”，后续换新视频也不会覆盖旧记录。</p>${cloudHtml}<div class="lab-list">${p.videos.map(v=>`<div class="lab-video"><div class="lab-emoji">${v.emoji}</div><div><h3>${v.title}</h3><div class="lab-meta">命中框架：${v.framework} · ${v.note}</div></div><div class="lab-views">▶ ${v.views}</div></div>`).join('')}</div>${savedHtml}${segHtml}`;
 }
 function copySegmentText(id){
   const seg=(getAssignData().segments||[]).find(s=>s.id===id);
   if(!seg)return alert('没有找到这个片段');
   navigator.clipboard.writeText(seg.text||'').then(()=>alert('已复制片段文字'));
 }
-function labKol(){return `<div class="lab-eyebrow">Creator Roster</div><h1 class="lab-title">KOL 档案库</h1><p class="lab-desc">这位虚拟达人用于完成作业第3步：在KOL库中录入一个适合品牌的达人，并用她来生成定制化Brief。</p><section class="lab-card lab-profile"><div class="lab-avatar">AI</div><div><h3>${LAB_KOL.name} <span style="font-size:13px;color:#63c8ff;font-family:ui-monospace,Menlo,monospace">${LAB_KOL.platform}</span></h3><div class="lab-stats"><div class="lab-stat"><b>${LAB_KOL.fans}</b>粉丝</div><div class="lab-stat"><b>${LAB_KOL.avg}</b>平均播放</div><div class="lab-stat"><b>${LAB_KOL.er}</b>互动率</div></div>${['direction','audience','style','rate','stage','why'].map(k=>`<div class="lab-meta"><b>${{direction:'内容方向',audience:'受众画像',style:'风格',rate:'报价',stage:'合作阶段',why:'为何契合'}[k]}：</b>${LAB_KOL[k]}</div>`).join('')}</div></section>`;}
-function labBrief(){const opts=LAB_FRAMEWORKS.map(f=>`<option value="${f.no}">${f.no} ${f.name}｜${f.formula}</option>`).join('');return `<div class="lab-eyebrow">Brief Generator</div><h1 class="lab-title">Brief 生成器</h1><p class="lab-desc">选择虚拟KOL和视频框架，一键生成术后康复衣服的达人拍摄Brief。这里先做稳定可交作业版本，后续可再接入AI模型自动扩写。</p><section class="lab-card"><div class="lab-form"><div><div class="lab-field"><label>选择网红</label><select class="lab-select" id="labKolSel"><option>${LAB_KOL.name}（术后恢复vlog / caregiver tips）</option></select></div><div class="lab-field"><label>选择框架</label><select class="lab-select" id="labFwSel">${opts}</select></div><div class="lab-field"><label>产品核心卖点</label><textarea class="lab-textarea" id="labPoints">前开襟/侧开扣，不需要大幅抬手；柔软亲肤面料，减少伤口附近摩擦；适合换药、复诊、居家恢复；可放置引流管或小物；比普通T恤更体面。</textarea></div><button class="lab-action" onclick="generateLabBrief()">生成定制 Brief</button></div><div><div class="lab-card no-shadow" style="background:rgba(9,22,44,.72)"><h3>达人快照</h3><div class="lab-meta"><b>${LAB_KOL.name}</b> · ${LAB_KOL.fans}粉 · ${LAB_KOL.er}互动率</div><div class="lab-meta">${LAB_KOL.why}</div></div></div></div><hr style="border:none;border-top:1px solid rgba(104,184,255,.18);margin:22px 0"><div class="lab-output" id="labBriefOut">Brief 将显示在这里。</div></section>`;}
-function generateLabBrief(){const no=document.getElementById('labFwSel').value;const f=LAB_FRAMEWORKS.find(x=>x.no===no)||LAB_FRAMEWORKS[0];const p=document.getElementById('labPoints').value.trim();document.getElementById('labBriefOut').textContent=`《${LAB_KOL.name} 术后康复衣服 TikTok Brief》\n\n1. 视频目标\n围绕“post surgery recovery clothes”拍摄一条30-45秒真实生活短视频，让观众理解：术后恢复期的穿衣、换药、复诊并不是普通宽松衣服能解决的事。\n\n2. 命中框架\n${f.no} ${f.name}｜${f.formula}\n开头钩子类型：${f.hook}\n核心逻辑：${f.steps}\n\n3. 达人设定\n达人以术后恢复vlog/照护者tips口吻拍摄，语气真实、温柔、实用，不做夸张医疗承诺。受众是美国28-55岁女性、术后患者、家属照护者和正在准备手术的人。\n\n4. 必拍镜头\n- 0-3秒：${f.hookEx}\n- 痛点：普通T恤/睡衣在抬手、拉扯、换药时造成不便。\n- 产品：展示前开襟/侧开扣/口袋/面料细节。\n- 使用：床边穿衣、换药前后、复诊出门、居家活动。\n- 信任：真实体验一句话 + 评论/尺码卡/护理建议画面。\n- CTA：Save this for your recovery checklist / Check the size guide.\n\n5. 产品卖点\n${p}\n\n6. 禁止项\n不得承诺治愈、止痛、加速伤口愈合；不得冒充医生背书；不得展示过度敏感伤口画面；不要把产品说成医疗器械。`; }
+function labKol(){const k=activeProduct().kol;return `<div class="lab-eyebrow">Creator Roster</div><h1 class="lab-title">KOL 档案库</h1><p class="lab-desc">这位虚拟达人用于完成作业第3步：在KOL库中录入一个适合品牌的达人，并用她来生成定制化Brief。</p><section class="lab-card lab-profile"><div class="lab-avatar">AI</div><div><h3>${k.name} <span style="font-size:13px;color:#63c8ff;font-family:ui-monospace,Menlo,monospace">${k.platform}</span></h3><div class="lab-stats"><div class="lab-stat"><b>${k.fans}</b>粉丝</div><div class="lab-stat"><b>${k.avg}</b>平均播放</div><div class="lab-stat"><b>${k.er}</b>互动率</div></div>${['direction','audience','style','rate','stage','why'].map(key=>`<div class="lab-meta"><b>${{direction:'内容方向',audience:'受众画像',style:'风格',rate:'报价',stage:'合作阶段',why:'为何契合'}[key]}：</b>${k[key]}</div>`).join('')}</div></section>`;}
+function labBrief(){const p=activeProduct(), k=p.kol;const opts=p.frameworks.map(f=>`<option value="${f.no}">${f.no} ${f.name}｜${f.formula}</option>`).join('');return `<div class="lab-eyebrow">Brief Generator</div><h1 class="lab-title">Brief 生成器</h1><p class="lab-desc">${p.briefIntro}这里先做稳定可交作业版本，后续可再接入AI模型自动扩写。</p><section class="lab-card"><div class="lab-form"><div><div class="lab-field"><label>选择网红</label><select class="lab-select" id="labKolSel"><option>${k.name}（${k.direction}）</option></select></div><div class="lab-field"><label>选择框架</label><select class="lab-select" id="labFwSel">${opts}</select></div><div class="lab-field"><label>产品核心卖点</label><textarea class="lab-textarea" id="labPoints">${p.briefDefaultPoints}</textarea></div><button class="lab-action" onclick="generateLabBrief()">生成定制 Brief</button></div><div><div class="lab-card no-shadow" style="background:rgba(9,22,44,.72)"><h3>达人快照</h3><div class="lab-meta"><b>${k.name}</b> · ${k.fans}粉 · ${k.er}互动率</div><div class="lab-meta">${k.why}</div></div></div></div><hr style="border:none;border-top:1px solid rgba(104,184,255,.18);margin:22px 0"><div class="lab-output" id="labBriefOut">Brief 将显示在这里。</div></section>`;}
+function generateLabBrief(){const p=activeProduct(), k=p.kol;const no=document.getElementById('labFwSel').value;const f=p.frameworks.find(x=>x.no===no)||p.frameworks[0];const points=document.getElementById('labPoints').value.trim();document.getElementById('labBriefOut').textContent=`《${k.name} ${p.briefProduct} TikTok Brief》\n\n1. 视频目标\n${p.briefGoal}\n\n2. 命中框架\n${f.no} ${f.name}｜${f.formula}\n开头钩子类型：${f.hook}\n核心逻辑：${f.steps}\n\n3. 达人设定\n${p.briefAudience}\n\n4. 必拍镜头\n- 0-3秒：${f.hookEx}\n- ${p.briefShots.join('\n- ')}\n\n5. 产品卖点\n${points}\n\n6. 禁止项\n${p.briefBan}`; }
 function getPublishSpec(){
-  try{return JSON.parse(localStorage.getItem(LAB_SPEC_KEY)||'null')||LAB_SPEC;}catch(e){return LAB_SPEC;}
+  try{return JSON.parse(localStorage.getItem(labSpecKey())||'null')||activeProduct().specs[0];}catch(e){return activeProduct().specs[0];}
 }
 function applyPublishPreset(i){
-  const s=LAB_SPEC_PRESETS[Number(i)]||getPublishSpec();
+  const s=activeProduct().specs[Number(i)]||getPublishSpec();
   setPublishForm(s);
 }
 function setPublishForm(s){
@@ -1776,7 +1823,7 @@ function readPublishForm(){
 function savePublishSpec(){
   const s=readPublishForm();
   if(!s.primary||!s.hook||!s.caption){alert('请至少填写主关键词、前三秒字幕和Caption');return;}
-  localStorage.setItem(LAB_SPEC_KEY,JSON.stringify(s));
+  localStorage.setItem(labSpecKey(),JSON.stringify(s));
   renderLab('publish');
   alert('已保存发布规范');
 }
@@ -1786,10 +1833,11 @@ function copyPublishSpec(){
   navigator.clipboard.writeText(text).then(()=>alert('已复制发布规范'));
 }
 function labPublish(){
+  const p=activeProduct(), k=p.kol;
   const s=getPublishSpec();
-  const presetOptions=LAB_SPEC_PRESETS.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('');
+  const presetOptions=p.specs.map((item,i)=>`<option value="${i}">${item.name}</option>`).join('');
   const form=`<section class="lab-card lab-spec"><h3>编辑发布规范</h3><div class="lab-form"><div><div class="lab-field"><label>选择预设关键词组</label><select class="lab-select" onchange="applyPublishPreset(this.value)"><option value="">保留当前自定义</option>${presetOptions}</select></div><div class="lab-field"><label>核心关键词</label><input class="lab-input" id="pubPrimary" value="${s.primary||''}"></div><div class="lab-field"><label>辅助长尾关键词（用逗号分隔）</label><textarea class="lab-textarea" id="pubSecondary">${Array.isArray(s.secondary)?s.secondary.join(', '):(s.secondary||'')}</textarea></div><div class="lab-field"><label>选择该关键词的原因</label><textarea class="lab-textarea" id="pubReason">${s.reason||''}</textarea></div></div><div><div class="lab-field"><label>前3秒吸睛字幕</label><input class="lab-input" id="pubHook" value="${s.hook||''}"></div><div class="lab-field"><label>Caption</label><textarea class="lab-textarea" id="pubCaption">${s.caption||''}</textarea></div><div class="lab-field"><label>Hashtag组合</label><textarea class="lab-textarea" id="pubHashtags">${s.hashtags||''}</textarea></div><div class="lab-field"><label>交付要求</label><textarea class="lab-textarea" id="pubDelivery">${s.delivery||''}</textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="lab-action" onclick="savePublishSpec()">保存发布规范</button><button class="lab-action alt" onclick="copyPublishSpec()">复制规范</button></div></div></div></section>`;
-  return `<div class="lab-eyebrow">Publishing Spec · TikTok SEO</div><h1 class="lab-title">视频发布规范（达人交付要求）</h1><p class="lab-desc">这里保留了预设关键词组，也支持你自己输入和保存。保存后刷新页面也会保留，后续交给达人前可以直接复制。</p><div class="lab-band"><b>3"</b><div>达人 <strong>${LAB_KOL.name}</strong> · 所有关键词、Caption、Hashtag 都可以编辑保存。</div></div>${form}<section class="lab-card lab-spec"><h3>A 核心关键词 & 选词理由</h3><div class="lab-meta"><b>主关键词：</b><span class="lab-pill">${s.primary}</span></div><div class="lab-meta"><b>辅助长尾：</b>${(s.secondary||[]).map(x=>`<span class="lab-pill">${x}</span>`).join('')}</div><div class="lab-meta">${s.reason}</div></section><section class="lab-card lab-spec"><h3>B 开头3秒吸睛字幕（Hook Subtitle）</h3><div class="box">"${s.hook}"</div></section><section class="lab-card lab-spec"><h3>C Caption（视频文案）</h3><div class="lab-output">${s.caption}</div></section><section class="lab-card lab-spec"><h3>D Hashtag 组合</h3><div class="lab-output">${s.hashtags}</div></section><section class="lab-card lab-spec"><h3>E 达人交付要求</h3><div class="lab-meta">${s.delivery}</div></section>`;
+  return `<div class="lab-eyebrow">Publishing Spec · TikTok SEO</div><h1 class="lab-title">视频发布规范（达人交付要求）</h1><p class="lab-desc">这里保留了当前产品的预设关键词组，也支持你自己输入和保存。保存后刷新页面也会保留，后续交给达人前可以直接复制。</p><div class="lab-band"><b>3"</b><div>达人 <strong>${k.name}</strong> · 当前产品：<strong>${p.label}</strong> · 所有关键词、Caption、Hashtag 都可以编辑保存。</div></div>${form}<section class="lab-card lab-spec"><h3>A 核心关键词 & 选词理由</h3><div class="lab-meta"><b>主关键词：</b><span class="lab-pill">${s.primary}</span></div><div class="lab-meta"><b>辅助长尾：</b>${(s.secondary||[]).map(x=>`<span class="lab-pill">${x}</span>`).join('')}</div><div class="lab-meta">${s.reason}</div></section><section class="lab-card lab-spec"><h3>B 开头3秒吸睛字幕（Hook Subtitle）</h3><div class="box">"${s.hook}"</div></section><section class="lab-card lab-spec"><h3>C Caption（视频文案）</h3><div class="lab-output">${s.caption}</div></section><section class="lab-card lab-spec"><h3>D Hashtag 组合</h3><div class="lab-output">${s.hashtags}</div></section><section class="lab-card lab-spec"><h3>E 达人交付要求</h3><div class="lab-meta">${s.delivery}</div></section>`;
 }
 
 // ============================================================
@@ -1832,14 +1880,29 @@ function resetApp(){
 // ============================================================
 // 初始化
 // ============================================================
-setModel(curModel);
-updateGStatus();
-renderLab('frameworks');
-// 检查代理
-fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({__ping:true})})
-  .then(r=>r.json())
-  .then(d=>{if(d.ok)console.log('✅ 服务端代理正常');else needKey();})
-  .catch(()=>needKey());
+window.addEventListener('error',e=>{
+  const pg=document.getElementById('labPg');
+  if(pg&&!pg.innerHTML.trim()){
+    pg.style.display='block';
+    pg.innerHTML='<div style="padding:40px;max-width:900px;margin:40px auto;background:#101827;border:1px solid #244063;border-radius:18px;color:#e8f0ff"><h2>页面初始化失败</h2><p style="color:#9fb0c8">请刷新页面，或把这段错误发给我：</p><pre style="white-space:pre-wrap;color:#7ed3ff">'+String(e.message||e.error||'未知错误')+'</pre></div>';
+  }
+});
+try{
+  setModel(curModel);
+  updateGStatus();
+  renderLab('frameworks');
+  // 检查代理。file:// 本地打开时会失败，这是正常的，会自动切到前端 Key 模式。
+  fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({__ping:true})})
+    .then(r=>r.json())
+    .then(d=>{if(d.ok)console.log('✅ 服务端代理正常');else needKey();})
+    .catch(()=>needKey());
+}catch(e){
+  const pg=document.getElementById('labPg');
+  if(pg){
+    pg.style.display='block';
+    pg.innerHTML='<div style="padding:40px;max-width:900px;margin:40px auto;background:#101827;border:1px solid #244063;border-radius:18px;color:#e8f0ff"><h2>页面初始化失败</h2><p style="color:#9fb0c8">请把这段错误发给我：</p><pre style="white-space:pre-wrap;color:#7ed3ff">'+String(e.message||e)+'</pre></div>';
+  }
+}
 function needKey(){
   if(!getAKey()&&!getGKey()){
     setTimeout(()=>{document.getElementById('keyBanner').style.display='block';document.getElementById('keyBtn').style.display='flex';},800);
